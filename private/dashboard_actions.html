@@ -1,0 +1,46 @@
+<style>
+	.d-actions button { width: 50%; font-weight: bold; color: #333; height: 50%; border-radius: 0; overflow: hidden; position: relative; display: inline-block; vertical-align: top; font-size: 40%; border: 0; background-color: #fff; }
+	.d-actions .d_vertical button { width: 100%; height: 25%; }
+	.d-actions .d_horizontal button { width: 25%; height: 100%; }
+	.d-actions button:first-child { border-right: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; }
+	.d-actions button:nth-child(2) { border-bottom: 1px solid #e0e0e0; }
+	.d-actions button:nth-child(3) { border-right: 1px solid #e0e0e0; }
+	.d-actions button i { color: #6790f4; margin-bottom: 5px; font-size: 140%; display: block; }
+	.d-actions button:hover { background-color: rgba(103,144,244,1); color: #fff; }
+	.d-actions button:hover i { color: #fff; }
+</style>
+
+<body>
+	<button><i class="far fa-drone-alt"></i>Take off</button>
+	<button><i class="far fa-plane-arrival"></i>Land</button>
+	<button><i class="far fa-play-circle"></i>Start mission</button>
+	<button><i class="far fa-stop-circle"></i>Abort mission</button>
+</body>
+
+<template>
+
+</template>
+
+<script>
+
+	exports.id = 'actions';
+	exports.icon = 'fa fa-terminal';
+	exports.name = 'Actions';
+	exports.config = {};
+
+	exports.resize = function(width, height, el, display) {
+		var self = this;
+		var min = Math.min(self.width, self.height);
+		var btns = el.find('.btns');
+		btns.css('height', (min / 100) * 100 >> 0 + 'px');
+	};
+
+	exports.data = function(type, msg, el) {
+
+	};
+
+	exports.configure = function(options) {
+
+	};
+
+</script>

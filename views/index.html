@@ -1,0 +1,120 @@
+@{layout('')}
+@{title('Flow Stream')}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<meta http-equiv="X-UA-Compatible" content="IE=10" />
+	<meta name="robots" content="all,follow" />
+	<link href="https://cdn.componentator.com/spa.min@18pro.css" rel="stylesheet" type="text/css" />
+	<script src="//cdn.componentator.com/spa.min@18.js"></script>
+	@{import('meta', 'head', 'default.css', 'flow.js + func.js + helpers.js', 'favicon.ico')}
+</head>
+<body data---="exec">
+
+	<div data---="LAZY menu"></div>
+	<div data---="LAZY approve__null__cancel:@(Cancel)"></div>
+	<div data---="LAZY message__null__style:2"></div>
+
+	<div class="ui-dark">
+		<div data---="LAZY notifybar"></div>
+	</div>
+
+	<div data---="loading__null__style:2" class="hidden"></div>
+	<div data---="websocket__null__url:/;encoder:false"></div>
+	<div data---="shortcuts"></div>
+	<div data---="infowindows__common.windows"></div>
+
+	<div data---="layout2__null__parent:window" class="invisible">
+		<div data-type="left" data-size="220,220,200,0" data-scrollbar="selector:main;margin:76">
+			<header>
+				Flow Stream
+			</header>
+			<main data---="selected__common.page__selector:li;attr:id" data-bind="null__click li:common/navigate">
+				<br />
+				<ul class="nav">
+					<li data-id="dashboard"><i class="far fa-tachometer-alt-slow"></i>@(Dashboard)</li>
+					<li data-id="flow"><i class="far fa-project-diagram"></i>@(Flow)</li>
+				</ul>
+			</main>
+		</div>
+		<div data-type="main">
+			<div data---="part__common.page__if:dashboard;url:/parts/dashboard.html;reload:dashboard/reload" data-id="dashboard" class="hidden invisible"></div>
+			<div data---="part__common.page__if:flow;url:/parts/flow.html;reload:flow/reload" data-id="flow" class="hidden invisible"></div>
+		</div>
+	</div>
+
+	<script>
+
+		var common = {};
+
+		common.windows = [];
+		common.page = '';
+
+		FIND('#dashboard', function(com) {
+			common.dashboard = com;
+		});
+
+		CACHEPATH('common.pagecache', '1 week');
+
+		DEF.dateformat = '@(yyyy-MM-dd)';
+		ENV('date', '@(yyyy-MM-dd)');
+		ENV('ts', '@(yyyy-MM-dd HH:mm)');
+
+		PLUGIN('common', function(exports) {
+
+			exports.navigate = function(el) {
+				var id = el.attrd('id');
+				SET('?.page', id);
+			};
+
+			WATCH('common.page', function(path, value) {
+				SET('common.pagecache', value);
+			});
+
+		});
+
+		ON('@flag showloading', function() {
+			SETTER('loading/show');
+		});
+
+		ON('@flag hideloading', function() {
+			SETTER('loading/hide', 1000);
+		});
+
+		ON('message', function(msg) {
+
+			switch (msg.TYPE) {
+				case 'dashboard':
+					common.dashboard && common.dashboard.send(msg.component, msg);
+					break;
+
+				case 'flow/stats':
+					SET('flow.stats', { messages: msg.messages, mm: msg.mm, pending: msg.pending });
+					msg.traffic.priority.wait(function(key, next) {
+						var sleep = 500;
+						CMD('flow.traffic', key, { delay: 100, count: msg.traffic[key], speed: 3, limit: 30 });
+						setTimeout(next, sleep);
+					});
+					break;
+
+				case 'flow/status':
+					var refresh = W.flow && (!W.flow.status || !W.flow.status[msg.id]);
+					SET('flow.status.' + msg.id, msg.data);
+					refresh && CMD('flow.refresh');
+					break;
+
+				case 'flow/console':
+					if (W.flow)
+						SET('flow.console.' + msg.id, msg);
+					break;
+
+			}
+		});
+
+	</script>
+
+</body>
+</html>

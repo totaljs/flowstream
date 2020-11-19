@@ -1,0 +1,173 @@
+html,body { padding: 0; margin: 0; overflow: hidden; }
+
+$color   : #762681;
+
+.bg-smoke { background-color: #F8F8F8; }
+
+hr { border-color: #E0E0E0; }
+h3 { margin: 0 0 5px; padding: 0; font-size: 14px; }
+h3 i { margin-right: 7px; }
+p { font-size: 13px; line-height: 16px; }
+
+.ml5 { margin-left: 5px; }
+.ml10 { margin-left: 10px; }
+
+.ui-layout2-left { border-right: 1px solid #E0E0E0; background: linear-gradient(-90deg,#F8F8F8,#E8E8E8); }
+.ui-layout2-left .logo { float: left; margin: 10px 0 0 15px; line-height: 0; font-weight: bold; font-size: 16px; color: #777; }
+.ui-layout2-left .logo img { height: 45px; }
+.ui-layout2-left .logo:hover { text-decoration: none; }
+.ui-layout2-left header { height: 55px; border-bottom: 1px solid #E0E0E0; line-height: 55px; text-align: center; font-size: 18px; font-weight: bold; }
+.ui-layout2-left footer { height: 33px; border-top: 1px solid #E0E0E0; text-align: center; white-space: nowrap; }
+.ui-layout2-left footer span { cursor: pointer; width: 25%; text-align: center; float: left; border-left: 1px solid #E0E0E0; line-height: 31px; color: #888888; }
+.ui-layout2-left footer span:hover { color: #000; }
+.ui-layout2-left footer span:first-child { border-left: 0; }
+.ui-layout2-left footer .selected { color: #000; }
+.ui-layout2-left .nav { list-style-type: none; margin: 0 0 15px; padding: 0; }
+.ui-layout2-left .nav li { margin: 0; padding: 4px 15px; display: block; color: #000; cursor: pointer; }
+.ui-layout2-left .nav li span { float: right; color: #777; font-size: 10px; padding: 2px 0; border-radius: 2px; background-color: #E0E0E0; width: 16px; text-align: center; margin: 1px 0 0; }
+.ui-layout2-left .nav li:hover { background-color: #FFF; }
+.ui-layout2-left .nav i { width: 18px; color: #A0A0A0; text-align: center; margin-right: 7px; }
+.ui-layout2-left .nav .selected { background-color: #000 !important; color: #FFFFFF; }
+.ui-layout2-left .nav .selected i { color: #FFF; }
+.ui-layout2-left .nav .selected span { color: #FFF; background-color: #555; }
+.ui-layout2-left .caption { font-size: 12px; color: $color; padding: 5px 15px 8px; border-top: 1px solid #E0E0E0; margin: 5px 0 0; }
+
+.ui-layout2-main header { height: 55px; border-bottom: 1px solid #E0E0E0; }
+.ui-layout2-main header > nav { height: 55px; padding: 13px 15px 0 0; }
+.ui-layout2-main header label { float: left; line-height: 54px; font-weight: bold; margin-left: 18px; font-size: 16px; }
+.ui-layout2-main header label i { margin-right: 8px; color: $color; font-size: 20px; float: left; margin: 17px 10px 0 0; }
+.ui-layout2-main .padding { padding: 15px; }
+
+header > nav { float: right; }
+header > nav button { outline: 0; background: linear-gradient(#FFF,#F8F8F8); border: 1px solid #E0E0E0; border-left: 0; font-size: 12px; height: 28px; padding: 0 10px; margin: 0; color: #000; min-width: 80px; text-align: center; vertical-align: top; background-color: #FFF; float: left; }
+header > nav button i { margin-right: 5px; }
+header > nav button.highlight { color: #000; }
+header > nav button:first-child { border-left: 1px solid #E0E0E0; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+header > nav button:last-child { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+header > nav button:hover { border-color: rgba(0,0,0,0.2); }
+header > nav button:active { background: #E9E9E9; }
+header > nav button:disabled { color: silver; cursor: not-allowed; border-color: #E0E0E0 !important; background: linear-gradient(#F8F8F8,#F0F0F0) !important; }
+header > nav button:disabled i { color: silver !important; }
+
+footer { height: 30px; line-height: 29px; padding: 0 10px; font-size: 11px; }
+
+.panel { background-color: white; border-radius: 2px; border: 1px solid #E0E0E0; }
+.panel > .header { display: block; padding: 10px 15px; border-bottom: 1px solid #E0E0E0; font-size: 14px; font-weight: bold; background-color: #F8F8F8; }
+.panel > .header i { margin-right: 5px; }
+.panel > .header > button { float: right; border: 1px solid #E0E0E0; outline: 0; background-color: #FFF; font-size: 11px; border-radius: 2px; min-width: 70px; height: 22px; margin: -1px 0 0; cursor: pointer; }
+.panel > .header > button:hover { background-color: $color; border-color: $color; color: white; }
+.panel > .header > button:hover i { color: white !important; }
+.panel > .header > button:disabled { color: #C0C0C0; background-color: #E0E0E0; cursor: not-allowed; }
+.panel > .padding { padding: 15px; }
+
+.badge { font-size: 12px; padding: 4px 6px; border-radius: 2px; background-color: #F0F0F0; line-height: 12px; vertical-align: middle; margin-top: -2px; position: relative; display: inline-block; color: white; }
+.badge i { margin-right: 3px; }
+.badge-blue { background-color: #4CC1E9; }
+.badge-red { background-color: #DA4453; }
+.badge-green { background-color: #8CC152; }
+.badge-yellow { background-color: #EFDC05; }
+.badge-orange { background-color: #E9573F; }
+.badge-gray { background-color: #606060; }
+.badge-purple { background-color: #967ADC; }
+.badge-pink { background-color: #D770AD; }
+.badge-silver { background-color: #E0E0E0; color: gray; }
+.badge-large { padding: 3px 8px; font-size: 14px; line-height: 16px; }
+.badge-large i { margin-right: 5px; }
+.badge-small { font-size: 10px; padding: 0px 3px 1px; }
+
+.initials { width: 37px; height: 37px; text-align: center; color: #FFF; display: block; line-height: 36px; font-weight: bold; border-radius: 100px; cursor: default; }
+
+.button { border: 0; margin: 0; background-color: $color; color: #FFF; height: 34px; padding: 0 20px; cursor: pointer; font-family: Arial; line-height: 34px; vertical-align: middle; outline: 0; font-size: 14px; text-decoration: none; transition: all 0.3s; float: left; }
+.button i { width: 16px; margin-right: 5px; }
+.button:hover { opacity: .8; }
+.button:active { background-color: #D0D0D0; }
+.button:disabled { background-color: #F5F5F5 !important; border-color: #E0E0E0 !important; color: silver !important; cursor: not-allowed; box-shadow: none; opacity: 1 !important; }
+.button:first-child { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+.button:last-child { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+.button.addbutton { margin-top: 20px; height: 32px; width: 100%; background-color: #f0f0f0; color: #000; line-height: 32px }
+
+.buttons.small button { height: 26px; }
+.buttons button { background: #FFF linear-gradient(0deg,#F5F5F5,#FFF); border: 1px solid #E0E0E0; border-left: 0; font-size: 12px; height: 32px; min-width: 90px; padding: 0 10px; cursor: pointer; vertical-align: top; }
+.buttons button i { width: 13px; margin-right: 5px; text-align: center; }
+.buttons button:hover { color: #000; }
+.buttons button:active { background: #F0F0F0; }
+.buttons button:disabled { color: #A0A0A0; background: #F0F0F0 !important; cursor: not-allowed; }
+.buttons button:first-child { border-top-left-radius: 2px; border-bottom-left-radius: 2px; border-left: 1px solid #E0E0E0; }
+.buttons button:last-child { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+
+.submit { border-top: 1px solid #E0E0E0; height: 50px; padding: 12px 15px 0; }
+.submit .button { height: 28px; padding: 0 20px; line-height: 28px; font-size: 12px; min-width: 200px; }
+
+.flowcomponents > div { height: 28px; line-height: 28px; font-size: 13px; padding: 0 10px; cursor: grab; border-top: 1px solid #E0E0E0; }
+.flowcomponents > div:first-child { border-top: 0; }
+.flowcomponents > div i { width: 15px; margin: 7px 0 0 5px; text-align: center; float: right; }
+
+.keyvalue { border: 1px solid #E0E0E0; padding: 8px 10px; position: relative; display: inline-block; margin: -1px 0 0 -1px; overflow: hidden; width: 20%; vertical-align: top; }
+.keyvalue .key { font-size: 12px; font-weight: bold; color: #000; }
+.keyvalue .value { font-size: 13px; color: #000; }
+
+.keyvalue2 { height: 18px; font-size: 12px; margin: 1px 0 0; }
+.keyvalue2:last-child { border-bottom: 0; }
+.keyvalue2 .key { margin-right: 150px; color: gray; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.keyvalue2 .value { float: right; width: 150px; text-align: right; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.keyvalue2 .value b { max-width: 120px; position: relative; display: inline-block; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: right; }
+.keyvalue2 .value span { float: right; width: 24px; color: gray; font-size: 10px; text-align: center; margin: 2px 0 0; border-left: 1px solid #E0E0E0; margin-left: 5px; overflow: hidden; padding: 0 2px; }
+
+.listing figure { width: 25%; position: relative; display: inline-block; padding: 10px; vertical-align: top; }
+.listing figure .border { border: 1px solid #E0E0E0; background-color: #FFFFFF; border-radius: 3px; }
+.listing figure .highlight { border: 2px solid $color; }
+.listing figure .disabled { border-color: #F0F0F0; background-color: #F9F9F9; }
+.listing figure .border-warning { border-color: red; border-width: 2px; }
+.listing figure .padding { padding: 10px; }
+.listing figure .header { padding: 10px; }
+.listing .keyvalue .value { cursor: default; }
+
+.strike { text-decoration: line-through; }
+
+.iconbutton { position: relative; display: inline-block; vertical-align: top; margin: 0 10px 10px 0; border: 1px solid #D0D0D0; border-radius: 3px; width: 60px; text-align: center; cursor: pointer; padding: 5px 5px; background-color: #FFF; }
+.iconbutton i { font-size: 24px; text-align: center; margin: 8px 0 5px; display: block; }
+.iconbutton span { display: block; font-size: 11px; padding: 2px 0; }
+.iconbutton.selected { background-color: $color; border-color: $color !important; color: #FFF; }
+
+.centered { display: table; width: 100%; height: 100%; }
+.centered > div { display: table-cell; width: 100%; height: 100%; vertical-align: middle; text-align: center; }
+
+.ui-flow { position: relative; transform-origin: top left; transition: transform 0.3s; }
+.ui-flow .component { position: absolute; left: 150px; top: 150px; border: 2px solid #E0E0E0; background-color: #FFF; border-radius: 2px; box-shadow: 1px 1px 10px rgba(0,0,0,0.03); }
+.ui-flow .inputs { position: absolute; width: 100%; top: -8px; left: 4px; }
+.ui-flow .input { float: left; font-size: 11px; margin-right: 5px; }
+.ui-flow-v .outputs { position: absolute; width: 100%; margin: -10px 0 0 8px; }
+.ui-flow-v .output { float: left; border-radius: 2px; background-color: #FFF; padding: 2px 5px; font-size: 11px; border: 1px solid #E0E0E0; margin-right: 5px; color: gray; }
+.ui-flow-v .output .component-io { margin-right: 5px; }
+.ui-flow-h .outputs { margin: 0; }
+.ui-flow-h .output { background-color: #FFF; padding: 0 8px; font-size: 11px; color: gray; border-top: 1px solid #E0E0E0; line-height: 20px; }
+.ui-flow-h .output > span { display: block; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.ui-flow-h .output .component-io { float: right; margin: 3px -14px 0 0; }
+.ui-flow .component-io { width: 12px; height: 12px; line-height: 12px; border-radius: 100px; background-color: #A0A0A0; text-align: center; float: left; margin-top: 1px; font-size: 9px; }
+.ui-flow .content { padding: 10px 8px; min-width: 200px; min-height: 24px; cursor: default; }
+.ui-flow-v .output.connected { border-color: #000; color: #000; }
+.ui-flow-h .output.connected { color: #000; }
+.ui-flow .output.connected .component-io { background-color: #68B25B !important; }
+.ui-flow .input.connected .component-io { background-color: #68B25B !important; }
+.ui-flow .connection { stroke-width: 2; stroke: #000; fill: none; }
+.ui-flow .connection-draft { stroke: #4285F4; }
+.ui-flow .component-selected { border-color: #4285F4; }
+.ui-flow .connection-selected { stroke: #4285F4; }
+.ui-flow .area { position: relative; }
+.ui-flow-v .hasoutputs .content { padding-bottom: 20px; }
+.ui-flow path.highlight { stroke: #4285F4; }
+.ui-flow svg { margin: -1px 0 0 -1px; }
+.ui-flow-grid { stroke: #F8F8F8; stroke-width: 2; }
+.ui-flow .output.connected .component-io.fa-times, .ui-flow .input.connected .component-io.fa-times, .ui-flow .output .component-io.fa-times, .ui-flow .input .component-io.fa-times { background-color: red !important; color: #FFF; }
+.ui-flow .traffic { fill: #4285F4; }
+
+.ui-dark .ui-flow-grid { stroke: #303030; }
+.ui-dark .ui-flow .component { border-color: #404040; background-color: #303030; }
+.ui-dark .ui-flow .output .component-io { color: #606060; }
+.ui-dark .ui-flow .input .component-io { color: #606060; }
+.ui-dark .ui-flow .output { background-color: #303030; color: #FFF; border-color: #404040; }
+.ui-dark .ui-flow .connection { stroke: gray; }
+.ui-dark .ui-flow .connection-draft { stroke: #4285F4; }
+.ui-dark .ui-flow path.highlight { stroke: #4285F4; }
+.ui-dark .ui-flow .component-selected { border-color: #4285F4; }
+.ui-dark .ui-flow .connection-selected { stroke: #4285F4; }
