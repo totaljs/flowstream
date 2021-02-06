@@ -1,14 +1,12 @@
 <div data-scope="dashboard">
-	<header>
-		<label><i class="far fa-tachometer-alt-slow"></i>@(Dashboard)</label>
-		<nav class="hidden" data-bind="user.role__show:value!=='user'" data---="validation__?">
-			<button class="exec" data-exec="?/components"><i class="far fa-box-full"></i>@(Components)</button>
-			<button name="submit" data-bind="?.undo__enable:value&&value.length" class="b exec highlight" data-exec="?/submit" disabled><i class="far fa-play-circle"></i>@(APPLY)</button>
-		</nav>
-	</header>
-	<div data---="viewbox__common.page__parent:window;margin:55;scrollbar:1;visibleY:1">
+	<div data---="viewbox__common.page__parent:window;margin:60;scrollbar:1;visibleY:1">
 		<div data---="dashboard__?.design__$id:dashboard;ondrop:?/drop;padding:15;parent:.ui-scrollbar-area"></div>
 	</div>
+</div>
+
+<div class="virtualwire" data-if="dashboard">
+	<button class="exec" data-exec="dashboard/components"><i class="fa fa-box"></i>@(Components)</button>
+	<button name="submit" class="b exec highlight" data-exec="dashboard/submit"><i class="far fa-play-circle green"></i>@(APPLY)</button>
 </div>
 
 <script id="template_dashboardsettings" type="text/html">
@@ -17,7 +15,7 @@
 	</div>
 </script>
 
-<div data---="largeform__common.form__if:dashboardsettings;width:700;visibleY:1;icon:far fa-cog;submit:dashboard/settings_submit;$id:dashboardsettings" class="hidden invisible">
+<div data---="largeform__common.form__if:dashboardsettings;width:700;visibleY:1;icon:fa fa-cog;submit:dashboard/settings_submit;$id:dashboardsettings" class="hidden invisible">
 	<div id="dashboard_settings"></div>
 	<nav data---="validation__settings__$id:dashboardsettingsvalidation">
 		<button name="submit"><i class="far fa-check-circle"></i>@(APPLY)</button>
@@ -25,7 +23,7 @@
 	</nav>
 </div>
 
-<div id="dashboard_repo"></div>
+<div id="dashboard_repo" class="hidden"></div>
 
 <script>
 
@@ -34,35 +32,47 @@
 	// Reads dashboard statuses
 	SETTER(true, 'websocket/send', { TYPE: 'dashboard' });
 
-	AJAX('GET /api/dashboard/components/', function(response) {
-		var css = '';
-		response.wait(function(item, next) {
-			AJAX('GET /dashboard/' + item, function(response, err) {
-				if (response) {
-					var item = FUNC.parsedashboardcomponent(response);
-					var com = {};
-					new Function('exports', item.js)(com);
-					com.template = item.template ? Tangular.compile(item.template) : null;
-					com.settings = item.settings;
-					com.html = item.html;
-
-					if (item.css)
-						css += item.css;
-
-					dashboard.components.push(com);
-				}
-				next();
-			});
-		}, function() {
-			css && CSS(css, 'dashboard');
-			EXEC('dashboard/init');
-		});
-	});
-
 	PLUGIN('dashboard', function(exports) {
 
 		var initialized_settings = {};
 		var settings_current;
+
+		exports.init = function() {
+			AJAX('GET /api/dashboard/components/', function(response) {
+				var css = '';
+				response.wait(function(item, next) {
+					AJAX('GET /dashboard/' + item, function(response, err) {
+						if (response) {
+							var item = FUNC.parsedashboardcomponent(response);
+							var com = {};
+							new Function('exports', item.js)(com);
+							com.template = item.template ? Tangular.compile(item.template) : null;
+							com.settings = item.settings;
+							com.html = item.html;
+
+							if (item.css)
+								css += item.css;
+
+							dashboard.components.push(com);
+						}
+						next();
+					});
+				}, function() {
+					css && CSS(css, 'dashboard');
+					AJAX('GET /api/dashboard/flow/', function(response) {
+						SET('?.flow', response);
+						AJAX('GET /api/dashboard', function(response) {
+							for (var i = 0; i < response.length; i++)
+								exports.add(response[i]);
+						});
+					});
+				});
+			});
+		};
+
+		exports.reload = function() {
+			// do something
+		};
 
 		exports.add = function(opt, nobind) {
 
@@ -117,16 +127,6 @@
 			item.service = com.service;
 
 			PUSH('?.design', item);
-		};
-
-		exports.init = function() {
-			AJAX('GET /api/dashboard/flow/', function(response) {
-				SET('?.flow', response);
-				AJAX('GET /api/dashboard', function(response) {
-					for (var i = 0; i < response.length; i++)
-						exports.add(response[i]);
-				});
-			});
 		};
 
 		exports.drop = function(meta) {
@@ -187,6 +187,17 @@
 			if (value !== 'dashboard')
 				SETTER('infowindows/hide', 'dashboardcomponents');
 		});
+
+		// WebSocket messages
+		ON('message', function(msg) {
+			switch (msg.TYPE) {
+				case 'dashboard':
+					common.dashboard && common.dashboard.send(msg.component, msg);
+					break;
+			}
+		});
+
+		exports.init();
 	});
 
 </script>

@@ -2,25 +2,28 @@ const Fs = require('fs');
 
 exports.install = function() {
 
-	ROUTE('+GET       /api/flow/components/', flow_components);
-	ROUTE('+POST      /api/flow/', flow_save);
-	ROUTE('+GET       /api/flow/', flow_read);
+	// Flow
+	ROUTE('+GET     /api/flow/components/', flow_components);
+	ROUTE('+POST    /api/flow/', flow_save);
+	ROUTE('+GET     /api/flow/', flow_read);
 
-	ROUTE('+GET       /api/dashboard/components/', dashboard_components);
-	ROUTE('+GET       /api/dashboard/flow/', dashboard_flow);
-	ROUTE('+POST      /api/dashboard/', dashboard_save);
-	ROUTE('+GET       /api/dashboard/', dashboard_read);
+	// Dashboard
+	ROUTE('+GET     /api/dashboard/components/', dashboard_components);
+	ROUTE('+GET     /api/dashboard/flow/', dashboard_flow);
+	ROUTE('+POST    /api/dashboard/', dashboard_save);
+	ROUTE('+GET     /api/dashboard/', dashboard_read);
 
 	// Socket
-	ROUTE('+SOCKET    /', socket, ['json']);
+	ROUTE('+SOCKET  /', socket, ['json']);
 
+	// Static files
 	FILE('/dashboard/*.html', dashboard_component);
 };
 
-function notify(type) {
+function notify(msg) {
 	var arr = FLOW.instance.instances();
 	arr.wait(function(com, next) {
-		com[type] && com[type]();
+		com[msg.TYPE] && com[msg.TYPE](msg);
 		setImmediate(next);
 	}, 3);
 }
@@ -56,7 +59,8 @@ function socket() {
 		switch (message.TYPE) {
 			case 'dashboard':
 			case 'status':
-				notify(message.TYPE);
+			case 'trigger':
+				notify(message);
 				break;
 		}
 	});
@@ -82,14 +86,13 @@ function flow_read() {
 
 function dashboard_components() {
 	var self = this;
-	Fs.readdir(PATH.root('private'), function(err, response) {
+	Fs.readdir(PATH.databases('dashboard'), function(err, response) {
 
 		var output = [];
 		for (var i = 0; i < response.length; i++) {
 			var item = response[i];
-			if (item.indexOf('dashboard_') === -1 || item.indexOf('.html') === -1)
-				continue;
-			output.push(item.replace('dashboard_', ''));
+			if ((/\.html$/).test(item))
+				output.push(item);
 		}
 
 		self.json(output);
@@ -119,5 +122,5 @@ function dashboard_read() {
 }
 
 function dashboard_component(req, res) {
-	res.file(PATH.private('dashboard_' + req.split[1]));
+	res.file(PATH.databases('dashboard/' + req.split[1]));
 }

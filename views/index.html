@@ -8,72 +8,49 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<meta http-equiv="X-UA-Compatible" content="IE=10" />
 	<meta name="robots" content="all,follow" />
-	<link href="https://cdn.componentator.com/spa.min@18pro.css" rel="stylesheet" type="text/css" />
+	<link href="https://cdn.componentator.com/spa.min@18.css" rel="stylesheet" type="text/css" />
 	<script src="//cdn.componentator.com/spa.min@18.js"></script>
-	@{import('meta', 'head', 'default.css', 'flow.js + func.js + helpers.js', 'favicon.ico')}
+	@{import('meta', 'head', 'default.css + ui.css', 'func.js + ui.js', 'favicon.ico')}
 </head>
 <body data---="exec">
 
 	<div data---="LAZY menu"></div>
 	<div data---="LAZY approve__null__cancel:@(Cancel)"></div>
 	<div data---="LAZY message__null__style:2"></div>
+	<div data---="LAZY notifybar"></div>
+	<div data---="loading"></div>
 
-	<div class="ui-dark">
-		<div data---="LAZY notifybar"></div>
-	</div>
-
-	<div data---="loading__null__style:2" class="hidden"></div>
-	<div data---="websocket__null__url:/;encoder:false"></div>
-	<div data---="shortcuts"></div>
 	<div data---="infowindows__common.windows"></div>
+	<div data---="websocket__null__url:/;encoder:false"></div>
 
-	<div data---="layout2__null__parent:window" class="invisible">
-		<div data-type="left" data-size="220,220,200,0" data-scrollbar="selector:main;margin:76">
-			<header>
-				Flow Stream
-			</header>
-			<main data---="selected__common.page__selector:li;attr:id" data-bind="null__click li:common/navigate">
-				<br />
-				<ul class="nav">
-					<li data-id="dashboard"><i class="far fa-tachometer-alt-slow"></i>@(Dashboard)</li>
-					<li data-id="flow"><i class="far fa-project-diagram"></i>@(Flow)</li>
-				</ul>
-			</main>
-		</div>
-		<div data-type="main">
-			<div data---="part__common.page__if:dashboard;url:/parts/dashboard.html;reload:dashboard/reload" data-id="dashboard" class="hidden invisible"></div>
-			<div data---="part__common.page__if:flow;url:/parts/flow.html;reload:flow/reload" data-id="flow" class="hidden invisible"></div>
-		</div>
-	</div>
+	<header>
+		<div class="custom" data---="virtualwire__common.page"></div>
+		<nav class="menu" data---="selected__common.page__selector:button">
+			<button class="exec" data-exec="common/page" data-if="dashboard"><i class="fa fa-dashboard"></i>@(Dashboard)</button>
+			<button class="exec" data-exec="common/page" data-if="flow"><i class="fa fa-vector-square"></i>@(Flow)</button>
+		</nav>
+	</header>
+
+	<div data---="part__common.page__if:dashboard;url:/parts/dashboard.html;reload:dashboard/reload" data-id="dashboard" class="hidden invisible"></div>
+	<div data---="part__common.page__if:flow;url:/parts/flow.html;reload:flow/reload" data-id="flow" class="hidden invisible"></div>
 
 	<script>
 
 		var common = {};
 
 		common.windows = [];
-		common.page = '';
+		common.page = 'dashboard';
 
 		FIND('#dashboard', function(com) {
 			common.dashboard = com;
 		});
 
-		CACHEPATH('common.pagecache', '1 week');
-
 		DEF.dateformat = '@(yyyy-MM-dd)';
-		ENV('date', '@(yyyy-MM-dd)');
-		ENV('ts', '@(yyyy-MM-dd HH:mm)');
 
 		PLUGIN('common', function(exports) {
-
-			exports.navigate = function(el) {
-				var id = el.attrd('id');
-				SET('?.page', id);
+			exports.page = function(el) {
+				SET('?.page', el.attrd('if'));
 			};
-
-			WATCH('common.page', function(path, value) {
-				SET('common.pagecache', value);
-			});
-
 		});
 
 		ON('@flag showloading', function() {
@@ -84,35 +61,7 @@
 			SETTER('loading/hide', 1000);
 		});
 
-		ON('message', function(msg) {
-
-			switch (msg.TYPE) {
-				case 'dashboard':
-					common.dashboard && common.dashboard.send(msg.component, msg);
-					break;
-
-				case 'flow/stats':
-					SET('flow.stats', { messages: msg.messages, mm: msg.mm, pending: msg.pending });
-					msg.traffic.priority.wait(function(key, next) {
-						var sleep = 500;
-						CMD('flow.traffic', key, { delay: 100, count: msg.traffic[key], speed: 3, limit: 30 });
-						setTimeout(next, sleep);
-					});
-					break;
-
-				case 'flow/status':
-					var refresh = W.flow && (!W.flow.status || !W.flow.status[msg.id]);
-					SET('flow.status.' + msg.id, msg.data);
-					refresh && CMD('flow.refresh');
-					break;
-
-				case 'flow/console':
-					if (W.flow)
-						SET('flow.console.' + msg.id, msg);
-					break;
-
-			}
-		});
+		SETTER(true, 'loading/hide', 1000);
 
 	</script>
 

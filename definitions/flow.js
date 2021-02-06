@@ -3,7 +3,7 @@ const Path = require('path');
 
 var FLOW = {};
 
-FLOW.instance = FLOWSTREAM();
+FLOW.instance = FLOWSTREAM('default', ERROR('FlowStream error'));
 FLOW.instance.interval = 5000;
 FLOW.instance.on('stats', function() {
 	if (MAIN.ws) {
@@ -42,20 +42,16 @@ FLOW.instance.ondashboard = function(status) {
 
 // Refresh all components
 FLOW.refresh = function(callback) {
-	var path = PATH.root('private');
+	var path = PATH.databases('flow');
 	Fs.readdir(path, function(err, files) {
 		files.wait(function(item, next) {
-
-			if (item.indexOf('flow_') === -1 || item.lastIndexOf('.html') === -1) {
+			if ((/\.html$/).test(item)) {
+				Fs.readFile(Path.join(path, item), function(err, response) {
+					FLOW.instance.add(item.replace(/\.html/g, ''), response.toString('utf8'));
+					next();
+				});
+			} else
 				next();
-				return;
-			}
-
-			Fs.readFile(Path.join(path, item), function(err, response) {
-				FLOW.instance.add(item.replace(/flow_|\.html/g, ''), response.toString('utf8'));
-				next();
-			});
-
 		}, callback);
 	});
 };
@@ -120,6 +116,7 @@ FLOW.load = function() {
 ON('ready', function() {
 	FLOW.refresh(FLOW.load);
 
+	// Tries to refresh all components in five seconds interval
 	if (DEBUG)
 		setInterval(FLOW.refresh, 5000);
 
