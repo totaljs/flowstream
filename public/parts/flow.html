@@ -228,7 +228,7 @@
 			switch (msg.TYPE) {
 				case 'flow/stats':
 
-					if (common.page !== 'flow')
+					if (common.page !== 'flow' || NOTFOCUSED())
 						return;
 
 					SET('flow.stats', { messages: msg.messages, mm: msg.mm, pending: msg.pending });

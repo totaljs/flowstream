@@ -4,7 +4,11 @@ const Path = require('path');
 var FLOW = {};
 
 FLOW.instance = FLOWSTREAM('default', ERROR('FlowStream error'));
+
+// Interval for statistics
 FLOW.instance.interval = 5000;
+
+// Captures stats from Flow
 FLOW.instance.on('stats', function() {
 	if (MAIN.ws) {
 		FLOW.instance.stats.TYPE = 'flow/stats';
@@ -12,6 +16,7 @@ FLOW.instance.on('stats', function() {
 	}
 });
 
+// component.status() will execute this method
 FLOW.instance.onstatus = function(status) {
 
 	var instance = this;
@@ -26,6 +31,7 @@ FLOW.instance.onstatus = function(status) {
 
 };
 
+// component.dashboard() will execute this method
 FLOW.instance.ondashboard = function(status) {
 
 	var instance = this;
@@ -56,6 +62,7 @@ FLOW.refresh = function(callback) {
 	});
 };
 
+// Reads designer
 FLOW.json = function(controller) {
 	Fs.readFile(PATH.databases('flow.json'), function(err, response) {
 		controller.binary(response ? response : Buffer.from('{}', 'ascii'), 'application/json');
