@@ -16,11 +16,11 @@
 					var send = data => instance.send('output', data);
 					var error = (err) => $.throw(err);
 					fn($.data, instance, instance.cache, $, $, require, send, error);
-					$.destroy();
 				} catch (e) {
 					$.throw(e);
 				}
 			}
+			$.destroy();
 		};
 
 		instance.configure = function() {
