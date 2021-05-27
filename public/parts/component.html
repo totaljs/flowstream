@@ -1,0 +1,47 @@
+<div data-scope="~PATH~" class="componenteditor invisible">
+	<div data---="viewbox__null__parent:window;margin:60;scrollbar:0">
+		<div data---="codemirror__?.body__type:htmlmixed;parent:auto;contextmenu:?/contextmenu;$assign:EDITOR;height:0__''"></div>
+	</div>
+	<nav>
+		<div class="help" style="margin-top:25px"><a href="https://docs.totaljs.com/" target="_blank"><i class="far fa-book-spells"></i>@(Documentation)</a></div>
+		<div>
+			<button name="submit" class="exec" data-exec="?/submit"><i class="far fa-check-circle"></i>@(SUBMIT)</button>
+			<button class="exec" data-exec="?/cancel">@(Cancel)</button>
+		</div>
+	</nav>
+</div>
+
+<script>
+	PLUGIN('~PATH~', function(exports) {
+
+		var init = false;
+
+		exports.reload = function() {
+			if (!init) {
+				exports.element.find('.componenteditor').rclass('invisible', 1000);
+				init = true;
+			}
+		};
+
+		exports.refresh = function() {
+		};
+
+		exports.submit = function() {
+
+			var model = GET('? @reset');
+			if (model.id) {
+				var com = flow.components[model.id];
+				com && OFF('configure_' + com.name.slug());
+				$('#settings_f' + model.id).remove();
+				FREE();
+			}
+
+			DAPI('components_save @showloading', model, ASETTER('message/response @hideloading', exports.cancel));
+		};
+
+		exports.cancel = function() {
+			SET('common.page', 'flow');
+		};
+
+	});
+</script>

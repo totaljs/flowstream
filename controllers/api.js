@@ -1,46 +1,58 @@
-const Fs = require('fs');
-
 exports.install = function() {
 
-	// Flow
-	ROUTE('+GET     /api/flow/components/', flow_components);
-	ROUTE('+POST    /api/flow/', flow_save);
-	ROUTE('+GET     /api/flow/', flow_read);
+	// FlowStream
+	ROUTE('+API    /api/    -streams                          *Streams      --> query');
+	ROUTE('+API    /api/    -streams_read/{id}                *Streams      --> read');
+	ROUTE('+API    /api/    +streams_save                     *Streams      --> save');
+	ROUTE('+API    /api/    -streams_remove/{id}              *Streams      --> remove');
+	ROUTE('+API    /api/    -streams_stats                    *Streams      --> stats');
 
-	// Dashboard
-	ROUTE('+GET     /api/dashboard/components/', dashboard_components);
-	ROUTE('+GET     /api/dashboard/flow/', dashboard_flow);
-	ROUTE('+POST    /api/dashboard/', dashboard_save);
-	ROUTE('+GET     /api/dashboard/', dashboard_read);
+	// Variables
+	ROUTE('+API    /api/    -variables                        *Variables    --> read');
+	ROUTE('+API    /api/    +variables_save                   *Variables    --> save');
+
+	// Clipboard
+	ROUTE('+API    /api/    -clipboard_export/id              *Clipboard    --> export');
+	ROUTE('+API    /api/    +clipboard_import                 *Clipboard    --> import');
+
+	// Components
+	ROUTE('+API    /api/    -components/{fsid}                *Components   --> query');
+	ROUTE('+API    /api/    -components_read/{fsid}/{id}      *Components   --> read');
+	ROUTE('+API    /api/    +components_save                  *Components   --> save');
+	ROUTE('+API    /api/    -components_remove/{fsid}/{id}    *Components   --> remove');
 
 	// Socket
-	ROUTE('+SOCKET  /', socket, ['json']);
+	ROUTE('+SOCKET  /flows/{id}/', socket, 1024 * 5);
 
-	// Static files
-	FILE('/dashboard/*.html', dashboard_component);
 };
 
-function notify(msg) {
-	var arr = FLOW.instance.instances();
+function notify(instance, msg) {
+	var arr = instance.instances();
 	arr.wait(function(com, next) {
 		com[msg.TYPE] && com[msg.TYPE](msg);
 		setImmediate(next);
 	}, 3);
 }
 
-function socket() {
+function socket(id) {
 
 	var self = this;
 	var timeout;
+	var FS = MAIN.flowstream.instances[id];
+	var DB = MAIN.flowstream.db[id];
 
-	MAIN.ws = self;
+	if (!FS) {
+		self.destroy();
+		return;
+	}
 
-	self.autodestroy(() => MAIN.ws = null);
+	FS.ws = self;
+	self.autodestroy(() => FS.ws = null);
 
 	var refreshstatus = function() {
 
 		timeout = null;
-		var arr = FLOW.instance.instances();
+		var arr = FS.instances();
 
 		// Sends last statuses
 		arr.wait(function(com, next) {
@@ -50,77 +62,81 @@ function socket() {
 
 	};
 
-	self.on('open', function() {
+	self.on('open', function(client) {
 		timeout && clearTimeout(timeout);
 		timeout = setTimeout(refreshstatus, 1500);
+		client.send({ TYPE: 'flow/variables', data: FS.variables });
+		client.send({ TYPE: 'flow/variables2', data: FS.variables2 });
+		client.send({ TYPE: 'flow/components', data: FS.components(true) });
+		client.send({ TYPE: 'flow/design', data: FS.export() });
+		client.send({ TYPE: 'flow/errors', data: FS.errors });
 	});
 
 	self.on('message', function(client, message) {
 		switch (message.TYPE) {
-			case 'dashboard':
+			case 'call':
+				var instance = FS.meta.flow[message.id];
+				if (instance && instance.call) {
+					message.id = message.callbackid;
+					message.TYPE = 'flow/call';
+					instance.call(message.data, function(data) {
+						message.data = data;
+						client.send(message);
+					});
+				}
+				break;
+			case 'note':
+				var instance = FS.meta.flow[message.id];
+				if (instance) {
+					instance.note = message.data;
+					DB.design[message.id].note = message.data;
+					message.TYPE = 'flow/note';
+					self.send(message);
+					MAIN.flowstream.save();
+				}
+				break;
 			case 'status':
+				notify(FS, message);
+				break;
+			case 'refresh':
+				refreshstatus();
+				break;
+			case 'reset':
+				FS.errors.length = 0;
+				message.TYPE = 'flow/reset';
+				self.send(message);
+				break;
 			case 'trigger':
-				notify(message);
+				var instance = FS.meta.flow[message.id];
+				instance && instance.trigger && instance.trigger(message);
+				break;
+			case 'reconfigure':
+				DB.design[message.id].config = message.data;
+				FS.reconfigure(message.id, message.data);
+				MAIN.flowstream.save();
+				message.TYPE = 'flow/config';
+				self.send(message);
+				MAIN.flowstream.refresh(id, 'config');
+				break;
+			case 'save':
+				DB.design = message.data;
+				FS.use(CLONE(message.data), function(err) {
+					err && ERROR(err);
+					MAIN.flowstream.save();
+					MAIN.flowstream.refresh(id, 'flow');
+				});
+				message.TYPE = 'flow/design';
+				self.send(message, conn => conn !== client);
+				break;
+			case 'variables':
+				FS.variables = DB.variables = message.data;
+				MAIN.flowstream.save();
+				for (var key in FS.meta.flow) {
+					var instance = FS.meta.flow[key];
+					instance.variables && instance.variables(DB.variables);
+				}
+				MAIN.flowstream.refresh(id, 'variables');
 				break;
 		}
 	});
-
-}
-
-function flow_components() {
-	var self = this;
-	self.json(FLOW.instance.components(true));
-}
-
-function flow_save() {
-	var self = this;
-	FLOW.save(self.req.bodydata);
-	FLOW.instance.use(self.body);
-	self.success();
-}
-
-function flow_read() {
-	var self = this;
-	FLOW.json(self);
-}
-
-function dashboard_components() {
-	var self = this;
-	Fs.readdir(PATH.databases('dashboard'), function(err, response) {
-
-		var output = [];
-		for (var i = 0; i < response.length; i++) {
-			var item = response[i];
-			if ((/\.html$/).test(item))
-				output.push(item);
-		}
-
-		self.json(output);
-	});
-}
-
-function dashboard_flow() {
-	var self = this;
-	self.json(FLOW.dashboard());
-}
-
-function dashboard_save() {
-	var self = this;
-
-	Fs.writeFile(PATH.databases('dashboard.json'), self.req.bodydata, ERROR('dashboard_save'));
-	self.success();
-}
-
-function dashboard_read() {
-	var self = this;
-	Fs.readFile(PATH.databases('dashboard.json'), function(err, response) {
-		if (response)
-			self.binary(response, 'application/json');
-		else
-			self.json([]);
-	});
-}
-
-function dashboard_component(req, res) {
-	res.file(PATH.databases('dashboard/' + req.split[1]));
 }

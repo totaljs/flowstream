@@ -1,79 +1,82 @@
-FUNC.parsedashboardcomponent = function(html) {
 
-	var beg = -1;
-	var end = -1;
+(function() {
 
-	var body_style = '';
-	var body_template = '';
-	var body_settings = '';
-	var body_fe = '';
+	var TABSCOUNT = function(val) {
+		var count = 0;
+		for (var i = 0; i < val.length; i++) {
+			if (val.charAt(i) === '\t')
+				count++;
+			else
+				break;
+		}
+		return count;
+	};
 
-	var body_style = '';
-	var body_template = '';
-	var body_settings = '';
-	var body_body = '';
-	var raw = html;
+	var TABS = function(count) {
+		var str = '';
+		for (var i = 0; i < count; i++)
+			str += '\t';
+		return str;
+	};
 
-	beg = raw.indexOf('<template');
-	if (beg !== -1) {
-		end = raw.indexOf('</template>', beg);
-		var tmp = raw.substring(raw.indexOf('>', beg) + 1, end);
-		raw = raw.replace(raw.substring(beg, end + 11), '');
-		body_template = tmp.trim();
-	}
+	FUNC.wrapbracket = function(cm, pos) {
 
-	beg = raw.indexOf('<body');
-	if (beg !== -1) {
-		end = raw.indexOf('</body>', beg);
-		var tmp = raw.substring(raw.indexOf('>', beg) + 1, end);
-		raw = raw.replace(raw.substring(beg, end + 7), '');
-		body_body = tmp.trim();
-	}
+		var line = cm.getLine(pos.line);
 
-	beg = raw.indexOf('<settings');
-	if (beg !== -1) {
-		end = raw.indexOf('</settings>', beg);
-		var tmp = raw.substring(raw.indexOf('>', beg) + 1, end);
-		raw = raw.replace(raw.substring(beg, end + 11), '');
-		body_settings = tmp.trim();
-	}
+		if (!(/(function|switch|else|with|if|for|while)\s\(/).test(line) || (/\w/).test(line.substring(pos.ch)))
+			return;
 
-	end = 0;
+		var tabs = TABSCOUNT(line);
+		var lines = cm.lineCount();
+		var plus = '';
+		var nl;
 
-	while (true) {
+		if (line.indexOf('= function') !== -1)
+			plus = ';';
+		else if (line.indexOf(', function') !== -1 || line.indexOf('(function') !== -1)
+			plus = ');';
 
-		beg = raw.indexOf('<script', end);
-		if (beg === -1)
-			break;
+		if (pos.line + 1 >= lines) {
+			// end of value
+			cm.replaceRange('\n' + TABS(tabs + 1) + '\n' + TABS(tabs) + '}' + plus, pos, null, '+input');
+			pos.line++;
+			pos.ch = tabs + 1;
+			cm.setCursor(pos);
+			return true;
+		}
 
-		end = raw.indexOf('</script>', beg);
-		if (end === -1)
-			break;
+		if (plus) {
+			var lchar = line.substring(line.length - 2);
 
-		var body = raw.substring(beg, end);
-		var beg = body.indexOf('>') + 1;
+			if (lchar !== ');') {
+				lchar = line.charAt(line.length - 1);
+				if (lchar !== ';' && lchar !== ')')
+					lchar = '';
+			}
 
-		var tmp = body.substring(8, beg - 1);
-		// var be = tmp === 'total' || tmp === 'flow';
-		body = body.substring(beg);
-		body = body.trim();
-		body_fe = body;
-		end += 9;
-	}
+			if (lchar) {
+				pos.ch = line.length - lchar.length;
+				var post = {};
+				post.line = pos.line;
+				post.ch = line.length;
+				cm.replaceRange('', pos, post, '+move');
+			}
+		}
 
-	beg = raw.indexOf('<style');
-	if (beg !== -1) {
-		end = raw.indexOf('</style>', beg);
-		var tmp = raw.substring(raw.indexOf('>', beg) + 1, end);
-		raw = raw.replace(raw.substring(beg, end + 8), '');
-		body_style = tmp.trim();
-	}
+		for (var i = pos.line + 1; i < lines; i++) {
 
-	var com = {};
-	com.settings = body_settings;
-	com.css = body_style;
-	com.template = body_template;
-	com.html = body_body;
-	com.js = body_fe;
-	return com;
-};
+			var cl = cm.getLine(i);
+			var tc = TABSCOUNT(cl);
+
+			if (tc <= tabs) {
+				var nl = cl && cl.indexOf('}') === -1 ? true : false;
+				pos.line = i - 1;
+				pos.ch = 10000;
+				cm.replaceRange('\n' + TABS(tabs) + '}' + plus + (nl ? '\n' : ''), pos, null, '+input');
+				pos.ch = tabs.length;
+				cm.setCursor(pos);
+				return true;
+			}
+		}
+	};
+})();

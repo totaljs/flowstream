@@ -1,13 +1,54 @@
-<div data-scope="flow">
-	<div data---="viewbox__null__parent:window;visibleX:true;visibleY:true;scrollbar:true;margin:90">
-		<div data---="flow__?.data__width:6000;height:6000;grid:16;horizontal:1;infopath:?.info;undopath:?.undo;redopath:?.redo;ondrop:?/drop;contextmenu:?/contextmenu;dblclick:?/settings"></div>
-	</div>
-	<div class="stats"><i class="fa fa-refresh fa-spin mr5"></i> @(Processed messages:) <b data-bind="?.stats.messages__text__empty__format:0"></b> / pending <span class="gray" data-bind="?.stats.pending__text__empty__format:0"></span></div>
-</div>
+<div class="flow" data-scope="flow">
 
-<div class="virtualwire" data-if="flow">
-	<button class="exec" data-exec="flow/components"><i class="fa fa-box"></i>@(Components)</button>
-	<button class="b exec highlight" data-exec="flow/submit"><i class="far fa-play-circle green"></i>@(APPLY)</button>
+	<header class="header">
+		<div>
+			<button class="exec apply" data-exec="?/submit" data-bind="?.changed__.highlight"><i class="fa fa-play"></i><span>@(APPLY)</span></button>
+		</div>
+		<div>
+			<button title="@(Add)" class="exec green" data-exec="?/add"><i class="fa fa-plus-circle"></i></button>
+			<button title="@(Variables)" class="exec" data-exec="?/variables"><i class="fa fa-clipboard-list"></i></button>
+			<button title="@(Console)" class="exec" data-exec="?/console" data-bind="common.logs.errors.items.length__.red"><i class="fa fa-bug"></i></button>
+			<button title="@(Reset)" class="exec hidden" data-exec="?/reset" data-bind="common.logs.errors.items.length__show"><i class="fas fa-broom"></i></button>
+			<button title="@(Settings)" class="exec" data-exec="?/edit"><i class="fa fa-cog"></i></button>
+			<a href="https://docs.totaljs.com/" title="@(Documentation: Total.js Platform)" target="_blank" class="special"><i class="fa fa-book"></i></a>
+		</div>
+		<div>
+			<button disabled title="@(Undo)" data-bind="?.undo__enabled:value && value.length" class="exec" data-exec="?/operation" data-type="undo"><i class="fas fa-undo"></i></button>
+			<button disabled title="@(Redo)" data-bind="?.redo__enabled:value && value.length" class="exec" data-exec="?/operation" data-type="redo"><i class="fas fa-redo"></i></button>
+			<button title="@(Zoom in)" class="exec" data-exec="?/operation" data-type="in"><i class="fas fa-search-plus"></i></button>
+			<!--<button title="@(Reset zoom)" class="exec" data-exec="?/operation" data-type="reset"><i class="fas fa-bullseye"></i></button>-->
+			<button title="@(Zoom out)" class="exec" data-exec="?/operation" data-type="out"><i class="fas fa-search-minus"></i></button>
+		</div>
+		<div>
+			<button title="@(Clear)" class="exec" data-exec="?/clear"><i class="far fa-trash-alt"></i></button>
+		</div>
+	</header>
+
+	<div data---="layout__?.layout__margin:45">
+
+		<script type="text/plain">
+			{
+				left: { size: 265, minsize: 200, resize: true },
+				bottom: { size: 30 },
+				main: {}
+			}
+		</script>
+
+		<section data-type="left">
+			<div data-import="url:/panels/flow.html"></div>
+		</section>
+
+		<section data-type="main">
+			<div data---="viewbox__null__parent:auto;visibleX:true;visibleY:true;scrollbar:true;margin:0;scrollbarshadow:1">
+				<div data---="flow__?.data__width:6000;height:6000;grid:16;horizontal:1;snapping:5;steplines:1;infopath:?.info;undopath:?.undo;redopath:?.redo;ondrop:?/drop;contextmenu:?/contextmenu;dblclick:?/settings;outputoffsetY:15;inputoffsetY:15"></div>
+			</div>
+		</section>
+
+		<section data-type="bottom">
+			<div class="stats"><i class="fa fa-refresh fa-spin mr5"></i> @(Processed messages:) <b data-bind="?.stats.messages__text__empty__format:0"></b> / pending <span class="gray" data-bind="?.stats.pending__text__empty__format:0"></span></div>
+		</section>
+
+	</div>
 </div>
 
 <script id="template_flowsettings" type="text/html">
@@ -16,12 +57,16 @@
 	</div>
 </script>
 
-<div data---="largeform__common.form__if:settings;width:700;visibleY:1;icon:fa fa-cog;submit:flow/settings_submit;$id:flowsettings" class="hidden invisible">
+<div data---="largeform__common.form__if:settings;width:800;visibleY:1;icon:fa fa-cog;submit:flow/settings_submit;$id:flowsettings" class="hidden invisible">
 	<div id="flow_settings"></div>
 	<nav data---="validation__settings__$id:settingsvalidation">
 		<button name="submit"><i class="far fa-check-circle"></i>@(APPLY)</button>
 		<button name="cancel">@(Cancel)</button>
 	</nav>
+</div>
+
+<div data---="panel__common.panel__if:readme;width:500;title:@(Read me);zindex:10;$id:readme">
+	<div data-bind="common.readme__html:value?Thelpers.markdown(value, { element: el }):''" class="padding"></div>
 </div>
 
 <!-- A temporary repository for components settings -->
@@ -30,7 +75,7 @@
 <script>
 
 	if (!W.flow)
-		W.flow = { data: {}, console: {} };
+		W.flow = { data: {}, note: {}, config: {}, variables: {}, variables2: {}, status: {}, errors: {}, calls: {} };
 
 	// Reads flow statuses
 	SETTER(true, 'websocket/send', { TYPE: 'flow' });
@@ -38,41 +83,149 @@
 	PLUGIN('flow', function(exports) {
 
 		var initialized_settings = {};
+		var checksums = {};
 		var settings_current;
+		var flowstreamid;
 
 		exports.init = function() {
-			AJAX('GET /api/flow/components/', function(response) {
-
-				var js = [];
-				var css = [];
-
-				for (var i = 0; i < response.length; i++) {
-					var com = response[i];
-					com.js && js.push(com.js);
-					com.css && css.push(com.css);
-				}
-
-				if (js.length)
-					new Function(js.join('\n'))();
-
-				CSS(css.join(''), 'flowcomponents');
-				SET('?.components', response);
-			});
+			flowstreamid = NAV.url.split('/')[2];
+			common.flowstreamid = flowstreamid;
+			ADD('websocket__null__url:/flows/{0}/?openplatform={1}'.format(flowstreamid, NAV.query.openplatform || '') + ';encoder:false');
 		};
 
 		exports.reload = function() {
-			WAIT('flow.components', exports.refresh);
-			CMD('flow.refresh');
+		};
+
+		exports.call = function(id, data, callback) {
+			var callbackid = GUID(10);
+			if (typeof(data) === 'function') {
+				callback = data;
+				data = null;
+			}
+			flow.calls[callbackid] = callback;
+			SETTER('websocket/send', { TYPE: 'call', id: id, data: data, callbackid: callbackid });
+		};
+
+		exports.add = function(el) {
+
+			var opt = {};
+			opt.element = el;
+			opt.items = [];
+			opt.items.push({ id: 'create', name: '@(Create component)', icon: 'fa fa-code' });
+			opt.items.push({ id: 'opensource', name: '@(Download components)', icon: 'fas fa-cloud-download' });
+
+			if (common.marketplace) {
+				opt.items.push('-');
+				opt.items.push({ id: 'marketplace', name: '@(Marketplace)', icon: 'fa fa-shopping-basket', classname: 'b' });
+			}
+
+			opt.callback = function(item) {
+
+				switch (item.id) {
+					case 'create':
+						AJAX('GET /component.txt @showloading', function(response) {
+							SET('componenteditor @default', { flowstreamid: flowstreamid, body: response });
+							SET('common.page @hideloading', 'componenteditor');
+						});
+						break;
+					case 'opensource':
+						SET('common.form', 'componentsform');
+						break;
+					case 'marketplace':
+						exports.marketplace();
+						break;
+				}
+
+			};
+
+			SETTER('menu/show', opt);
+		};
+
+		exports.clear = function() {
+			SETTER('approve/show', '@(Are you sure you want to clear the current Flow?)', '"trash-o" @(Clear)', function() {
+				SET('?.data', {});
+			});
+		};
+
+		exports.reset = function() {
+			SETTER('approve/show', '@(Are you sure you want to reset errors?)', '"broom" @(Reset)', function() {
+				SETTER('websocket/send', { TYPE: 'reset' });
+			});
+		};
+
+		exports.marketplace = function() {
+			IMPORT('ONCE ' + common.marketplace + '/open/', AEXEC('marketplace/open', 'flowstream_component', function(response, data) {
+				SET('componenteditor @default', { flowstreamid: flowstreamid, body: response });
+				SET('common.page @hideloading', 'componenteditor');
+			}, true));
+		};
+
+		exports.operation = function(el) {
+			var type = el.attrd('type');
+			var name = type === 'in' || type === 'out' || type === 'reset' ? 'zoom' : type;
+			if (name !== 'zoom')
+				type = '';
+			CMD('flow.' + name, type);
 		};
 
 		exports.contextmenu = function(e, type, meta) {
+
+			var item = GET('?.info.selected');
+			if (!item)
+				return;
+
+			var component = item.isconnection ? null : flow.components.findItem('id', item.component);
+
 			var opt = {};
 			opt.x = e.pageX;
 			opt.y = e.pageY;
 			opt.items = [];
+
+			if (component) {
+				opt.items.push({ id: 'note', name: '@(Set a note)', icon: 'far fa-file-alt' });
+				if (component.settings) {
+					opt.items.push({ id: 'settings', name: '@(Configure)', icon: 'fa fa-wrench' });
+					opt.items.push('-');
+				}
+				opt.items.push({ id: 'edit', name: '@(Edit)', icon: 'fas fa-laptop-code' });
+				opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
+				opt.items.push({ id: 'copy2', name: '@(Copy source-code)', icon: 'far fa-copy' });
+			}
+
 			opt.items.push({ id: 'remove', name: '@(Remove)', icon: 'far fa-trash-alt red' });
-			opt.callback = function(item) {
-				switch (item.id) {
+			opt.callback = function(opt) {
+				switch (opt.id) {
+
+					case 'copy':
+					case 'copy2':
+						DAPI('components_read/' + flowstreamid + '/' + item.component, ASETTER('message/response', function(response) {
+							SETTER('clipboard/copy', opt.id === 'copy2' ? response.body : ENCRYPT({ body: response.body }, common.secret, 'component'));
+							SETTER('notifybar/success', '@(The component has been copied into the clipboard)');
+						}));
+						break;
+
+					case 'note':
+						var input = {};
+						input.icon = opt.icon;
+						input.element = $(e.target);
+						input.summary = '@(Type a custom note for this instance.)';
+						input.placeholder = '@(Your note)';
+						input.value = flow.note[item.id] || '';
+						input.maxlength = 10000;
+						input.callback = function(value) {
+							SETTER('websocket/send', { TYPE: 'note', id: item.id, data: value });
+						};
+						SETTER('floatinginput/show', input);
+						break;
+					case 'settings':
+						exports.settings(item);
+						break;
+					case 'edit':
+						DAPI('components_read/' + flowstreamid + '/' + item.component, ASETTER('message/response', function(response) {
+							SET('componenteditor @reset', response);
+							SET('common.page @hideloading', 'componenteditor');
+						}));
+						break;
 					case 'remove':
 						CMD('flow.selected.clear');
 						break;
@@ -81,91 +234,87 @@
 			SETTER('menu/show', opt);
 		};
 
+		exports.edit = function() {
+			W.parent.postMessage(STRINGIFY({ TYPE: 'edit', SOURCE: 'flow', id: flowstreamid }), '*');
+		};
+
+		exports.open = function(id) {
+			W.parent.postMessage(STRINGIFY({ TYPE: 'open', SOURCE: 'flow', id: id }), '*');
+		};
+
 		exports.settings = function(instance) {
 
 			var component = flow.components.findItem('id', instance.component);
+			if (!component || !component.settings)
+				return;
+
 			var id = 'settings_f' + component.id;
 			var dom = $('#flow_settings')[0];
 			var domrepo = $('#flow_repo')[0];
 			var domsettings = $('#' + id)[0];
 			var move = false;
 
+			if (!domsettings && initialized_settings[id])
+				delete initialized_settings[id];
+
 			if (dom.children[0] && dom.children[0] !== domsettings) {
 				domrepo.appendChild(dom.children[0]);
 				move = true;
 			}
 
-			RECONFIGURE('#flowsettings', { title: '@(Settings): ' + component.name });
+			RECONFIGURE('#flowsettings', { title: '@(Configuration): ' + component.name });
 
 			if (initialized_settings[id]) {
-				if (move)
-					dom.appendChild(domsettings);
+				move && dom.appendChild(domsettings);
 			} else {
 				initialized_settings[id] = 1;
-				$('#flow_settings').append($('#template_flowsettings').html().replace(/@NAME@/g, id).replace(/@BODY@/g, component.settings));
+				$('#flow_settings').aclass('invisible').append($('#template_flowsettings').html().replace(/@NAME@/g, id).replace(/@BODY@/g, component.settings));
 				COMPILE();
 			}
 
+			var config = CLONE(instance.config);
+			var path = 'flow.settings.' + id;
+			var eventdata = { id: instance.id, path: path, config: config, component: component };
+
+			eventdata.call = function(data, callback) {
+				exports.call(this.id, data, callback);
+			};
+
+			EMIT('configure_' + component.name.slug(), eventdata);
+
 			settings_current = instance;
-			SETTER('#settingsvalidation/setPath', 'flow.settings.' + id);
-			SET('flow.settings.{0} @reset'.format(id), CLONE(instance.config));
+			setTimeout(() => $('#flow_settings').rclass('invisible'), 1000);
+			SETTER('#settingsvalidation/setPath', path);
+			SET('flow.settings.{0} @reset'.format(id), config);
 			SET('common.form', 'settings');
 		};
 
 		exports.settings_submit = function(hide) {
+
 			var model = GET(FIND('#settingsvalidation').path + ' @clone');
 			settings_current.config = model;
+
+			if (settings_current.connected) {
+				// Send to the server
+				SETTER('websocket/send', { TYPE: 'reconfigure', id: settings_current.id, data: model });
+				SETTER('notifybar/success', '@(Configuration has been applied successfully)');
+			} else {
+				UPD('?.data.' + settings_current.id + '.config');
+				SET('?.config.' + settings_current.id, model);
+			}
+
 			hide();
 		};
 
-		exports.components = function() {
-
-			var id = 'flowcomponents';
-
-			if (common.windows.findItem('id', id)) {
-				SETTER('infowindows/toggle', id);
-				return;
+		exports.readme = function(el) {
+			var id = el.attrd2('id');
+			var model = GET('?');
+			var item = model.components.findItem('id', id);
+			if (item && item.readme) {
+				RECONFIGURE('#readme', { title: item.name, icon: item.icon || 'fas fa-question-circle' });
+				SET('common.readme', item.readme);
+				SET('common.panel', 'readme');
 			}
-
-			var win = {};
-			win.id = id;
-			win.hidden = false;
-			win.offset = { x: 500, y: 300, width: 250, height: 300, minwidth: 200, minheight: 200 };
-			win.title = '@(Flow components)';
-			win.html = '<div data-import="url:/windows/flow.html"></div>';
-			win.actions = { minimize: false, maximize: false, move: true, resize: true, autosave: true, close: true, hide: true };
-			PUSH('common.windows', win);
-
-		};
-
-		exports.refresh = function() {
-			AJAX('GET /api/flow/', function(response) {
-
-				var keys = Object.keys(response);
-
-				for (var i = 0; i < keys.length; i++) {
-					var key = keys[i];
-					if (key === 'paused')
-						continue;
-
-					var obj = response[key];
-					var com = flow.components.findItem('id', obj.component);
-
-					if (com == null) {
-						// component not found
-						WARN('Component "{0}" not found'.format(obj.component));
-						delete response[key];
-						continue;
-					}
-
-					obj.html = '<figure>' + com.html.format(key) + '</figure>';
-					obj.outputs = com.outputs ? CLONE(com.outputs) : null;
-					obj.inputs = com.inputs ? CLONE(com.inputs) : null;
-					obj.template = com.template ? Tangular.compile(com.template) : null;
-				}
-
-				SET('flow.data', response);
-			});
 		};
 
 		exports.submit = function() {
@@ -193,11 +342,16 @@
 					item.component = com.component;
 					item.x = com.x;
 					item.y = com.y;
-
+					item.note = com.note;
 					output[item.id] = item;
+
+					com.connected = true;
 				}
 
-				AJAX('POST /api/flow/ @showloading', output, ASETTER('notifybar/response @hideloading', '@(Flow has been saved and applied successfully)', ACMD('flow.reset')));
+				$('.isnewbie').rclass('isnewbie');
+				SET('?.changed', false);
+				SETTER('websocket/send', { TYPE: 'save', data: output });
+				CMD('flow.reset');
 			});
 
 		};
@@ -206,51 +360,337 @@
 			var id = e.el.attrd('id');
 			var com = flow.components.findItem('id', id);
 			var obj = {};
-			obj.id = 'f' + Date.now().toString(36);
+			obj.id = 'i' + Date.now().toString(36);
 			obj.component = id;
 			obj.x = e.offsetX;
 			obj.y = e.offsetY;
+			obj.name = com.name.slug();
 			obj.outputs = com.outputs ? CLONE(com.outputs) : null;
 			obj.inputs = com.inputs ? CLONE(com.inputs) : null;
 			obj.config = CLONE(com.config);
 			obj.html = '<figure>' + com.html.format(obj.id) + '</figure>';
 			obj.template = com.template ? Tangular.compile(com.template) : null;
+			obj.onmake = onmake;
 			CMD('flow.components.add', obj);
 		};
 
-		WATCH('common.page', function(path, value) {
-			if (value !== 'flow')
-				SETTER('infowindows/hide', 'flowcomponents');
-		});
+		var loadflow = function(response) {
+
+			for (var key in response) {
+
+				if (key === 'paused')
+					continue;
+
+				var obj = response[key];
+				var com = flow.components.findItem('id', obj.component);
+
+				if (com == null) {
+					// component not found
+					WARN('Component "{0}" not found'.format(obj.component));
+					delete response[key];
+					continue;
+				}
+
+				obj.name = com.name.slug();
+				obj.html = '<figure>' + com.html.format(key) + '</figure>';
+				obj.outputs = com.outputs ? CLONE(com.outputs) : null;
+				obj.inputs = com.inputs ? CLONE(com.inputs) : null;
+				obj.template = com.template ? Tangular.compile(com.template) : null;
+				obj.onmake = onmake;
+				flow.note[obj.id] = obj.note;
+				flow.config[obj.id] = obj.config;
+			}
+
+			exports.scope();
+			SET('?.data', response);
+			SET('flow.changed', false);
+			CMD('flow.refresh');
+		};
+
+		var onmake = function(el) {
+			var self = this;
+			var footer = el.find('footer');
+			var content;
+			if (footer.length) {
+				var area = footer.closest('.area');
+				var span = area.find('.meta').find('span');
+				area[0].appendChild(footer[0]);
+				area.parent();
+				content = area.find('.content');;
+			} else
+				content = el.find('.content');
+			content.append('<summ' + 'ary class="hidden" data-bind="flow.note.' + self.id + '__show__html"></summ' + 'ary>');
+			el.closest('.component').attr('data-bind', 'flow.errors.{0}__.iserror:value&&value.length__title:value?value[0].error:\'\''.format(self.id)).aclass('f-' + self.name).tclass('isnewbie', !self.connected);
+		};
+
+		var loadcomponents = function(response) {
+			var js = [];
+			var css = [];
+			var groups = {};
+			var checksums_tmp = {};
+
+			for (var i = 0; i < response.length; i++) {
+				var com = response[i];
+				checksums_tmp[com.id] = HASH(com.html);
+				com.js && js.push(com.js);
+				com.css && css.push(com.css);
+				var g = com.group || 'Common';
+				if (groups[g])
+					groups[g].push(com);
+				else
+					groups[g] = [com];
+			}
+
+			if (js.length)
+				new Function(js.join('\n'))();
+
+			var arr = [];
+			for (var key in groups) {
+				groups[key].quicksort('name');
+				arr.push({ name: key, items: groups[key] });
+			}
+
+			arr.quicksort('name');
+			exports.scope();
+			CSS(css.join(''), 'flowcomponents');
+			SET('?.components', response);
+			SET('?.components2', arr);
+
+			var model = GET('?');
+
+			if (model.data) {
+				var rebuild = false;
+				for (var key in model.data) {
+					var instance = model.data[key];
+					var com = response.findItem('id', instance.component);
+					if (com) {
+						var a = checksums_tmp[com.id];
+						var b = checksums[com.id];
+						var parent = instance.element ? instance.element.closest('.component') : null;
+
+						if (a !== b) {
+							instance.html = com.html.format(key);
+							rebuild = true;
+						}
+
+						if (parent) {
+							parent.rclass('f-' + instance.name);
+							instance.name = com.name.slug();
+							parent.aclass('f-' + instance.name);
+						}
+					}
+				}
+			}
+
+			checksums = checksums_tmp;
+			if (rebuild) {
+				UPD('?.data', 'update');
+				setTimeout(ASETTER('websocket/send', { TYPE: 'refresh' }), 1000);
+			}
+		};
 
 		// WebSocket messages
 		ON('message', function(msg) {
 			switch (msg.TYPE) {
+
 				case 'flow/stats':
 
-					if (common.page !== 'flow' || NOTFOCUSED())
+					if (common.page !== 'flow')
 						return;
 
 					SET('flow.stats', { messages: msg.messages, mm: msg.mm, pending: msg.pending });
+
 					msg.traffic.priority.wait(function(key, next) {
 						var sleep = 500;
-						CMD('flow.traffic', key, { delay: 100, count: msg.traffic[key], speed: 3, limit: 30 });
+						if (common.page === 'flow')
+							CMD('flow.traffic', key, { delay: 100, count: msg.traffic[key], speed: 3, limit: 30 });
 						setTimeout(next, sleep);
 					});
+
 					break;
+
+				case 'flow/error':
+					if (!common.console)
+						SET('common.console', true);
+					var com = msg.id ? flow.data[msg.id] : null;
+
+					if (com) {
+						if (flow.errors[msg.id])
+							flow.errors[msg.id].push(msg);
+						else
+							flow.errors[msg.id] = [msg];
+						UPD('flow.errors');
+					}
+
+					PUSH('^common.logs.errors.items', { type: 'error', body: msg.ts.format('[ts]') + ' - ' + Thelpers.encode(msg.error) + (com ? ' <b>(' + com.name + ' component)</b>' : ''), id: msg.id });
+
+					if (common.logs.errors.items.length > 50)
+						common.logs.errors.items.pop();
+
+					break;
+
+				case 'flow/call':
+					var fn = flow.calls[msg.id];
+					if (fn) {
+						fn(msg.data);
+						delete flow.calls[msg.id];
+					}
+					break;
+
 				case 'flow/status':
-					var refresh = W.flow && (!W.flow.status || !W.flow.status[msg.id]);
 					SET('flow.status.' + msg.id, msg.data);
-					refresh && CMD('flow.refresh');
 					break;
-				case 'flow/console':
-					SET('flow.console.' + msg.id, msg);
-					setTimeout2('refresh', ACMD('flow.refresh'), 50, 10);
+
+				case 'flow/note':
+					flow.data[msg.id].note = msg.data;
+					SET('flow.note.' + msg.id, msg.data);
+					if (common.page === 'flow')
+						CMD('flow.refresh');
 					break;
+
+				case 'flow/reset':
+					SET('flow.errors', {});
+					SET('common.logs.errors.items', []);
+					break;
+
+				case 'flow/errors':
+
+					for (var i = 0; i < msg.data.length; i++) {
+						var err = msg.data[i];
+						var com = err.id ? flow.data[err.id] : null;
+						err.type = 'error';
+						err.body = err.ts.format('[ts]') + ' - ' + Thelpers.encode(err.error) + (com ? ' <b>(' + com.name + ' component)</b>' : '');
+						if (com) {
+							if (flow.errors[err.id])
+								flow.errors[err.id].push(err);
+							else
+								flow.errors[err.id] = [err];
+						}
+					}
+
+					UPD('flow.errors');
+					SET('common.logs.errors.items', msg.data);
+					break;
+
+				case 'flow/design':
+					loadflow(msg.data);
+					break;
+
+				case 'flow/variables':
+					SET('flow.variables', msg.data);
+					break;
+
+				case 'flow/variables2':
+					SET('flow.variables2', msg.data);
+					break;
+
+				case 'flow/components':
+					loadcomponents(msg.data);
+					break;
+				case 'flow/config':
+					if (msg.id && msg.data) {
+						SET('flow.data.' + msg.id + '.config', msg.data);
+						SET('flow.config.' + msg.id, msg.data);
+					}
+					break;
+			}
+
+		});
+
+		exports.console = function() {
+			TOGGLE('common.console');
+		};
+
+		ON('online', function(is) {
+			if (is)
+				SETTER('loading/hide', 1000);
+			else
+				SETTER('loading/show', '@(Connecting to the server...)');
+		});
+
+		exports.variables = function() {
+			DAPI('variables/' + flowstreamid, function(response) {
+				var model = {};
+				model.variables = CLONE(flow.variables);
+				model.callback = function(model) {
+					SETTER('websocket/send', { TYPE: 'variables', data: model });
+				};
+				SET('variablesform @reset', model);
+				SET('common.form', 'variablesform');
+			});
+		};
+
+		exports.component_contextmenu = function(el, e) {
+			var id = el.attrd2('id');
+			var opt = {};
+			opt.x = e.pageX;
+			opt.y = e.pageY;
+			opt.items = [];
+			opt.items.push({ id: 'edit', name: '@(Edit)', icon: 'fas fa-laptop-code' });
+			opt.items.push({ id: 'clone', name: '@(Clone)', icon: 'far fa-clone' });
+			opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
+			opt.items.push({ id: 'copy2', name: '@(Copy source-code)', icon: 'far fa-copy' });
+			opt.items.push('-');
+			opt.items.push({ id: 'remove', name: '@(Remove)', icon: 'fas fa-trash-o red' });
+			opt.callback = function(item) {
+				switch (item.id) {
+					case 'edit':
+					case 'clone':
+					case 'copy':
+					case 'copy2':
+						DAPI('components_read/' + flowstreamid + '/' + id, ASETTER('message/response', function(response) {
+
+							if (item.id === 'copy' || item.id === 'copy2') {
+								SETTER('clipboard/copy', item.id === 'copy2' ? response.body : ENCRYPT({ body: response.body }, common.secret, 'component'));
+								SETTER('notifybar/success', '@(The component has been copied into the clipboard)');
+								return;
+							}
+
+							if (item.id === 'clone')
+								delete response.id;
+
+							response.flowstreamid = flowstreamid;
+							SET('componenteditor @reset', response);
+							SET('common.page @hideloading', 'componenteditor');
+						}));
+						break;
+					case 'remove':
+						var com = GET('?.components').findItem('id', id);
+						SETTER('approve/show', '@(Are you sure you want to remove selected the "{0}" component?)'.format(com.name), '"trash-o" @(Remove)', function() {
+							DAPI('components_remove/' + flowstreamid + '/' + id, ASETTER('notifybar/response', '@(The component "{0}" has been removed successfully)'.format(com.name)));
+						});
+						break;
+				}
+			};
+			SETTER('menu/show', opt);
+		};
+
+		ON('paste', function(text) {
+			var data;
+			if (text.substring(0, 9) === 'component') {
+				data = DECRYPT(text, common.secret, 'component');
+				if (data) {
+					data.id = '';
+					data.flowstreamid = flowstreamid;
+					SET('componenteditor @reset', data);
+					SET('common.page @hideloading', 'componenteditor');
+				}
 			}
 		});
 
+		WATCH('?.data', function(response, path, type) {
+			if (type === 2)
+				SET('flow.changed', true);
+		});
+
 		exports.init();
+	});
+
+	ON('markdown', function(el) {
+		el.find('pre code').each(function() {
+			var el = $(this);
+			el.aclass('json').html(Thelpers.jsonformat(PARSE(el.html())));
+		});
 	});
 
 </script>

@@ -4,12 +4,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "total4": "latest"
+    "total4": "beta"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["flowstream", "dashboard"],
+  "keywords": ["flowstream"],
   "author": "Peter Širka",
   "license": "MIT"
 }

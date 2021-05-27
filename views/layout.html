@@ -1,0 +1,65 @@
+@{title(CONF.name)}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<meta http-equiv="X-UA-Compatible" content="IE=10" />
+	<meta name="robots" content="all,follow" />
+	<link href="https://cdn.componentator.com/spa.min@18.css" rel="stylesheet" type="text/css" />
+	<script src="//cdn.componentator.com/spa.min@18.js"></script>
+	@{import('meta', 'head', 'dep.min.css + ui.css + default.css + editor.css', 'dep.min.js + default.js + func.js + ui.js + editor.js + helpers.js', 'favicon.png')}
+</head>
+<body data---="exec">
+
+	<div data---="LAZY menu__null__style:2"></div>
+	<div data---="LAZY approve__null__cancel:@(Cancel)"></div>
+	<div data---="LAZY message__null__style:2"></div>
+	<div data---="LAZY notifybar"></div>
+	<div data---="LAZY fileuploader"></div>
+	<div data---="LAZY clipboard"></div>
+	<div data---="LAZY faicons"></div>
+	<div data---="LAZY timepicker"></div>
+	<div data---="LAZY datepicker"></div>
+	<div data---="LAZY directory__null__placeholder:@(Search)"></div>
+	<div data---="LAZY colorpicker"></div>
+	<div data---="LAZY floatinginput"></div>
+
+	<div data---="markdown"></div>
+	<div data---="paste"></div>
+	<div data---="shortcuts"></div>
+	<div data---="loading"></div>
+	<div data---="console__common.console__datasource:common.logs"></div>
+
+	<div data---="importer__common.form__if:variablesform;url:/forms/variables.html"></div>
+
+	<script>
+
+		var common = {};
+
+		common.secret = 'flowstream';
+		common.marketplace = '@{CONF.marketplace}';
+		common.cdn = '@{CONF.cdn}';
+		common.layout = '';
+		common.windows = [];
+		common.page = '';
+
+		DEF.api = '/api/';
+		DEF.dateformat = '@(yyyy-MM-dd)';
+		ENV('ts', '@(yyyy-MM-dd HH:mm:ss)');
+
+		ON('@flag showloading', function() {
+			SETTER('loading/show');
+		});
+
+		ON('@flag hideloading', function() {
+			SETTER('loading/hide', 1000);
+		});
+
+	</script>
+
+	@{body}
+
+</body>
+</html>

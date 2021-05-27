@@ -1,0 +1,77 @@
+<div data---="largeform__common.form__if:~PATH~;icon:fas fa-cloud-download;title:@(Download components);autofocus:true;reload:?/reload;scrollbar:0;submit:?/submit;width:800" class="hidden" data-scope="~PATH~">
+	<div>
+		<div class="search">
+			<div data---="searchinput__?.search__placeholder:@(Search components)"></div>
+		</div>
+		<div data---="viewbox__common.form__parent:auto;margin:30;scrollbar:1">
+			<div class="padding">
+				<div class="help center m"><i class="far fa-question-circle"></i>@(All these components are open-source stored on) <a href="https://github.com/totaljs/flowstreamcomponents" target="_blank">https://github.com/totaljs/flowstreamcomponents</a></div>
+				<div class="listing listing-download" data-bind="?.items__template" data---="search__?.search__selector:figure">
+					<script type="text/html">
+						{{ foreach m in value }}
+							<figure data-search="{{ m.id }} {{ m.author }}" class="exec" data-exec="?/install" data-id="{{ m.id }}" data-name="{{ m.name }}">
+								<section>
+									{{ if m.version }}<div class="version">@(Version:) {{ m.version }}</div>{{ fi }}
+									<div class="icon"><i class="{{ m.icon | empty('fas fa-plug') }}"></i></div>
+									<div class="name">{{ m.name }}</div>
+									<div class="author">{{ m.author | empty }}</div>
+								</section>
+							</figure>
+						{{ end }}
+					</script>
+				</div>
+			</div>
+		</div>
+	</div>
+	<nav data---="validation__?">
+		<button name="cancel" style="width:100%">@(Cancel)</button>
+	</nav>
+</div>
+
+<script>
+
+	PLUGIN('~PATH~', function(exports) {
+
+		var notify = false;
+
+		exports.reload = function(com) {
+			notify = false;
+			AJAX('GET {0}components/db.json'.format(common.cdn), function(response) {
+				response.quicksort('name');
+				SET('?.items', response);
+			});
+		};
+
+		exports.install = function(el) {
+
+			var id = el.attrd2('id');
+			var com = flow.components.findItem('name', el.attrd2('name'));
+
+			if (com) {
+				$('#settings_f' + com.id).remove();
+				FREE();
+			}
+
+			var download = function() {
+				AJAX('GET {0}components/{1}.html'.format(common.cdn, id), function(response) {
+					if (typeof(response) === 'string') {
+						notify = true;
+						var model = {};
+						model.flowstreamid = common.flowstreamid;
+						model.id = com ? com.id : '';
+						model.body = response;
+						DAPI('components_save @showloading', model, ASETTER('notifybar/response @hideloading', '@(The component has been imported successfully)'));
+					}
+				});
+			};
+
+			if (notify)
+				download();
+			else
+				SETTER('approve/show', '@(Are you sure you want to import selected component "{0}"?)'.format(id), '"fas fa-cloud-download" @(Import)', download);
+
+		};
+
+	});
+
+</script>
