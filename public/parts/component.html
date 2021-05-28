@@ -44,4 +44,10 @@
 		};
 
 	});
+
+	SETTER('shortcuts/register', 'cmd + s, ctrl + s', function() {
+		if (common.page === 'componenteditor' && !common.form && !common.form2)
+			EXEC('componenteditor/submit');
+	}, true);
+
 </script>
