@@ -8,6 +8,7 @@
 			<button title="@(Add)" class="exec green" data-exec="?/add"><i class="fa fa-plus-circle"></i></button>
 			<button title="@(Variables)" class="exec" data-exec="?/variables"><i class="fa fa-clipboard-list"></i></button>
 			<button title="@(Console)" class="exec" data-exec="?/console" data-bind="common.logs.errors.items.length__.red"><i class="fa fa-bug"></i></button>
+			<button title="@(Sources)" class="exec" data-exec="?/sources"><i class="fa fa-code-branch"></i></button>
 			<button title="@(Reset)" class="exec hidden" data-exec="?/reset" data-bind="common.logs.errors.items.length__show"><i class="fas fa-broom"></i></button>
 			<button title="@(Settings)" class="exec" data-exec="?/edit"><i class="fa fa-cog"></i></button>
 			<a href="https://docs.totaljs.com/" title="@(Documentation: Total.js Platform)" target="_blank" class="special"><i class="fa fa-book"></i></a>
@@ -83,6 +84,7 @@
 
 	PLUGIN('flow', function(exports) {
 
+		var TYPES = { pub: 1, sub: 1 };
 		var initialized_settings = {};
 		var checksums = {};
 		var settings_current;
@@ -184,16 +186,19 @@
 
 			if (component) {
 				opt.items.push({ id: 'note', name: '@(Set a note)', icon: 'far fa-file-alt' });
-				if (component.settings) {
-					opt.items.push({ id: 'settings', name: '@(Configure)', icon: 'fa fa-wrench' });
-					opt.items.push('-');
+				if (!TYPES[component.type]) {
+					if (component.settings) {
+						opt.items.push({ id: 'settings', name: '@(Configure)', icon: 'fa fa-wrench' });
+						opt.items.push('-');
+					}
+					opt.items.push({ id: 'edit', name: '@(Edit)', icon: 'fas fa-laptop-code' });
+					opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
+					opt.items.push({ id: 'copy2', name: '@(Copy source-code)', icon: 'far fa-copy' });
 				}
-				opt.items.push({ id: 'edit', name: '@(Edit)', icon: 'fas fa-laptop-code' });
-				opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
-				opt.items.push({ id: 'copy2', name: '@(Copy source-code)', icon: 'far fa-copy' });
 			}
 
 			opt.items.push({ id: 'remove', name: '@(Remove)', icon: 'far fa-trash-alt red' });
+
 			opt.callback = function(opt) {
 				switch (opt.id) {
 
@@ -357,6 +362,10 @@
 
 		};
 
+		exports.sources = function() {
+			SET('common.form', 'sourcesform');
+		};
+
 		exports.drop = function(e, grid) {
 			var id = e.el.attrd('id');
 			var com = flow.components.findItem('id', id);
@@ -420,8 +429,22 @@
 				content = area.find('.content');;
 			} else
 				content = el.find('.content');
+
 			content.append('<summ' + 'ary class="hidden" data-bind="flow.note.' + self.id + '__show__html"></summ' + 'ary>');
-			el.closest('.component').attr('data-bind', 'flow.errors.{0}__.iserror:value&&value.length__title:value?value[0].error:\'\''.format(self.id)).aclass('f-' + self.name).tclass('isnewbie', !self.connected);
+			var target = el.closest('.component').attr('data-bind', 'flow.errors.{0}__.iserror:value&&value.length__title:value?value[0].error:\'\''.format(self.id)).tclass('isnewbie', !self.connected);
+			var com = flow.components.findItem('id', self.component);
+			if (com) {
+				if (com.type === 'pub' || com.type === 'sub') {
+					var span = el.find('.meta').find('span');
+					if (span.length)
+						span.css('background-color', Thelpers.color(span.html()));
+					var arr = el.find('.schema span');
+					for (var i = 0; i < arr.length; i++)
+						$(arr[i]).css('background-color', Thelpers.color(arr[i].innerHTML));
+						target.aclass('tms-' + com.type);
+				} else
+					target.aclass('f-' + self.name);
+			}
 		};
 
 		var loadcomponents = function(response) {
@@ -629,7 +652,13 @@
 		};
 
 		exports.component_contextmenu = function(el, e) {
+
 			var id = el.attrd2('id');
+
+			var component = flow.components.findItem('id', id);
+			if (TYPES[component.type])
+				return;
+
 			var opt = {};
 			opt.x = e.pageX;
 			opt.y = e.pageY;
@@ -675,7 +704,7 @@
 
 		ON('paste', function(text) {
 			var data;
-			if (!common.form && text.substring(0, 9) === 'component') {
+			if (!common.form && !common.form2 && common.page === 'flow' && text.substring(0, 9) === 'component') {
 				data = DECRYPT(text, common.secret, 'component');
 				if (data) {
 					data.id = '';
@@ -688,7 +717,7 @@
 
 		WATCH('?.data', function(response, path, type) {
 			if (type === 2)
-				SET('flow.changed', true);
+				SET('?.changed', true);
 		});
 
 		exports.init();

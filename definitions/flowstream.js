@@ -31,7 +31,16 @@ FS.error = function(err, id) {
 	console.log('FlowStream error', err, id);
 };
 
+var saveid;
+
 FS.save = function() {
+	saveid && clearTimeout(saveid);
+	saveid = setTimeout(FS.save_force, 1000);
+};
+
+FS.save_force = function() {
+
+	saveid = null;
 
 	for (var key in FS.db) {
 
@@ -72,6 +81,7 @@ FS.load = function() {
 					next();
 				});
 			}
+		}, function() {
 		});
 
 	});
@@ -86,9 +96,50 @@ FS.init = function(id, callback) {
 
 	// Interval for statistics
 	flow.interval = 5000;
+
+	flow.sockets = {}; // TMS
+	flow.sources = item.sources ? CLONE(item.sources) : []; // TMS
+
 	flow.errors = [];
 	flow.variables = item.variables;
 	flow.variables2 = FS.db.variables;
+
+	flow.components = function(prepare_export) {
+
+		var self = this;
+		var arr = [];
+
+		for (var key in self.meta.components) {
+			var com = self.meta.components[key];
+			if (prepare_export) {
+
+				var obj = {};
+				obj.id = com.id;
+				obj.name = com.name;
+				obj.type = com.type;
+				obj.css = com.ui.css;
+				obj.js = com.ui.js;
+				obj.icon = com.icon;
+				obj.config = com.config;
+				obj.html = com.ui.html;
+				obj.schema = com.schema ? com.schema.id : null;
+				obj.readme = com.ui.readme;
+				obj.template = com.ui.template;
+				obj.settings = com.ui.settings;
+				obj.inputs = com.inputs;
+				obj.outputs = com.outputs;
+				obj.group = com.group;
+				obj.version = com.version;
+				obj.author = com.author;
+
+				arr.push(obj);
+
+			} else
+				arr.push(com);
+		}
+
+		return arr;
+	};
 
 	// Captures stats from the Flow
 	flow.on('stats', function() {
@@ -97,6 +148,15 @@ FS.init = function(id, callback) {
 			flow.ws.send(flow.stats);
 		}
 	});
+
+	flow.onregister = function(component) {
+		if (!component.schema && component.schemaid && (component.type === 'pub' || component.type === 'sub')) {
+			var tmp = flow.sources.findItem('id', component.schemaid[0]);
+			var arr = component.type === 'pub' ? tmp.meta.publish : tmp.meta.subscribe;
+			component.schema = arr.findItem('id', component.schemaid[1]);
+			component.itemid = component.schemaid[0];
+		}
+	};
 
 	flow.onconnect = function(instance) {
 		instance.save = function() {
@@ -113,6 +173,13 @@ FS.init = function(id, callback) {
 				}
 			}
 		};
+	};
+
+	flow.onreconfigure = function(instance) {
+		item.design[instance.id].config = instance.config;
+		flow.ws && flow.ws.send({ TYPE: 'flow/config', id: instance.id, data: instance.config });
+		MAIN.flowstream.save();
+		MAIN.flowstream.refresh(instance.main.name, 'config');
 	};
 
 	flow.onerror = function(err) {
@@ -163,7 +230,19 @@ FS.init = function(id, callback) {
 	};
 
 	// Load components
-	flow.load(item.components, item.design, callback);
+	MAIN.tms.refresh(flow, function() {
+		flow.load(item.components, item.design, function() {
+
+			for (var source of flow.sources) {
+				if (source.socket)
+					source.socket.synchronize();
+			}
+
+			flow.ready = true;
+			callback && callback();
+		});
+	}, true);
+
 };
 
 ON('ready', function() {

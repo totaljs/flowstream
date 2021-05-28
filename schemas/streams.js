@@ -58,6 +58,7 @@ NEWSCHEMA('Streams', function(schema) {
 			model.design = {};
 			model.components = {};
 			model.variables = {};
+			model.sources = [];
 			model.dtcreated = NOW;
 			MAIN.flowstream.db[model.id] = model;
 			MAIN.flowstream.init(model.id, ERROR('FlowStream.init'));
@@ -92,6 +93,11 @@ NEWSCHEMA('Streams', function(schema) {
 		var item = MAIN.flowstream.db[id];
 		if (item) {
 			var instance = MAIN.flowstream.instances[id];
+
+			for (var key in instance.sockets)
+				instance.sockets[key].destroy();
+
+			instance.sockets = null;
 			instance.destroy();
 			instance.ws && instance.ws.destroy();
 			delete MAIN.flowstream.db[id];
