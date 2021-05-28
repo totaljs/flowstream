@@ -239,7 +239,7 @@ p { font-size: 13px; line-height: 16px; }
 .ui-dark .componenteditor > nav button[name='submit'] { background-color: var(--color); color: #FFF; }
 
 .landing .listing .icon { float: left; width: 50px; height: 50px; font-size: 25px; }
-.landing footer { height: 30px; background-color: #FFF; line-height: 30px; padding: 0; font-size: 11px; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; }
+.landing footer { height: 30px; background-color: #FFF; line-height: 30px; padding: 0; font-size: 11px; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .landing footer span { float: left; padding: 0 0 0 10px; width: 25%; }
 .landing footer span b { float: right; border-right: 1px solid #E0E0E0; padding-right: 10px; }
 .landing footer span:last-child b { border-right: 0; }
