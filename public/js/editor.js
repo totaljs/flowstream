@@ -420,7 +420,7 @@ COMPONENT('codemirror', 'linenumbers:true;required:false;trim:false;tabs:true;ma
 		self.$oldstate = invalid;
 		container.tclass(cls + '-invalid', invalid);
 	};
-}, ['//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/htmlmixed/htmlmixed.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/xml/xml.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/css/css.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/markdown/markdown.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/addon/mode/overlay.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/addon/edit/matchtags.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/addon/selection/active-line.min.js', '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.2/addon/runmode/runmode.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.3/addon/lint/javascript-lint.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.3/addon/lint/lint.min.js', '/js/jshint.min.js', function(next) {
+}, [function(next) {
 
 	(function(mod) {
 		mod(CodeMirror);

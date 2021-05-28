@@ -10,6 +10,10 @@
 
 	exports.make = function(instance, config) {
 
+		// instance.main.variables {Object}
+		// instance.main.variables2 {Object}
+		// instance.save();
+
 		instance.message = function($) {
 			$.destroy();
 		};
@@ -19,6 +23,14 @@
 
 		instance.close = function() {
 		};
+
+		instance.variables = function() {
+		};
+
+		instance.variables2 = function() {
+		};
+
+		instance.configure();
 
 	};
 

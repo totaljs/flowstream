@@ -23,6 +23,7 @@
 			<button title="@(Clear)" class="exec" data-exec="?/clear"><i class="far fa-trash-alt"></i></button>
 		</div>
 	</header>
+	<div class="header-empty"></div>
 
 	<div data---="layout__?.layout__margin:45">
 
@@ -541,6 +542,13 @@
 					SET('flow.status.' + msg.id, msg.data);
 					break;
 
+				case 'flow/redraw':
+					flow.data[msg.id] = msg.data;
+					flow.config[msg.id] = msg.data.config;
+					UPD('flow.data', 'update');
+					UPD('flow.config.' + msg.id);
+					break;
+
 				case 'flow/note':
 					flow.data[msg.id].note = msg.data;
 					SET('flow.note.' + msg.id, msg.data);
@@ -667,7 +675,7 @@
 
 		ON('paste', function(text) {
 			var data;
-			if (text.substring(0, 9) === 'component') {
+			if (!common.form && text.substring(0, 9) === 'component') {
 				data = DECRYPT(text, common.secret, 'component');
 				if (data) {
 					data.id = '';

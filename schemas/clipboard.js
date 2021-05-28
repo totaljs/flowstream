@@ -13,6 +13,12 @@ NEWSCHEMA('Clipboard', function(schema) {
 
 	schema.addWorkflow('import', function($, model) {
 		var data = model.data.parseJSON(true);
+
+		if (!data) {
+			$.invalid('@(Invalid data)');
+			return;
+		}
+
 		data.id = 'f' + UID();
 
 		if (!data.design)

@@ -12,6 +12,7 @@
 			<a href="https://docs.totaljs.com/" title="@(Documentation: Total.js Platform)" target="_blank" class="special"><i class="fa fa-book"></i></a>
 		</div>
 	</header>
+	<div class="header-empty"></div>
 
 	<div data---="viewbox__null__parent:window;scrollbar:1;scrollbarshadow:1;margin:75" class="invisible">
 
@@ -39,9 +40,9 @@
 									</div>
 									<div class="stats">
 										<label><i class="fa fa-calculator"></i>@(Message stats)</label>
-										<div><span>{{ m.stats.messages }}</span>@(Total)</div>
-										<div><span>{{ m.stats.pending }}</span>@(Pending)</div>
-										<div><span>{{ m.stats.mm }}</span>@(Per minute)</div>
+										<div><span>{{ m.stats.messages | format(0) }}</span>@(Total)</div>
+										<div><span>{{ m.stats.pending | format(0) }}</span>@(Pending)</div>
+										<div><span>{{ m.stats.mm | format(0) }}</span>@(Per minute)</div>
 									</div>
 								</section>
 							</figure>
@@ -56,9 +57,9 @@
 		<div data-bind="common.stats__template">
 			<script type="text/html">
 				<span><b>{{ value.memory | filesize }}</b>@(Memory)</span>
-				<span><b>{{ value.messages }}</b>@(Messages)</span>
-				<span><b>{{ value.pending }}</b>@(Pending)</span>
-				<span><b>{{ value.mm }}</b>@(Per minute)</span>
+				<span><b>{{ value.messages | format(0) }}</b>@(Messages)</span>
+				<span><b>{{ value.pending | format(0) }}</b>@(Pending)</span>
+				<span><b>{{ value.mm | format(0) }}</b>@(Per minute)</span>
 			</script>
 		</div>
 	</footer>
@@ -73,6 +74,7 @@
 	PLUGIN('common', function(exports) {
 
 		exports.refresh = function() {
+			exports.scope();
 			DAPI('streams', function(response) {
 
 				var groups = {};
@@ -110,7 +112,7 @@
 				} else {
 					var w = (WW / 1.4) >> 0;
 					var h = (WH / 1.4) >> 0;
-					PUSH('?.windows', { id: id, offset: { x: (WW / 2 - w / 2) >> 0, y: (WH / 2 - h / 2) >> 0, width: w, height: h, minwidth: 200, minheight: 200 }, title: item.name + (item.reference ? (': ' + item.reference) : ''), html: '<iframe src="/flows/{0}/" scrolling="no" frameborder="0"></iframe>'.format(id), actions: { minimize: false, maximize: true, move: true, resize: true, close: true, menu: false, autosave: true }});
+					PUSH('?.windows', { id: id, offset: { x: (WW / 2 - w / 2) >> 0, y: (WH / 2 - h / 2) >> 0, width: w, height: h, minwidth: 200, minheight: 200 }, title: item.name + (item.reference ? (': ' + item.reference) : ''), html: '<iframe src="/flows/{0}/?darkmode={1}" scrolling="no" frameborder="0"></iframe>'.format(id, $('body').hclass('ui-dark') ? '1' : '0'), actions: { minimize: false, maximize: true, move: true, resize: true, close: true, menu: false, autosave: true }});
 				}
 			}
 		};
@@ -196,6 +198,34 @@
 			opt.callback = function(item) {
 
 				switch (item.id) {
+
+					case 'import':
+						FUNC.import(function(data, hide) {
+							data = data.trim();
+							if (data.substring(0, 4) === 'flow' || data.charAt(0) === '{') {
+								if (data.charAt(0) !== '{') {
+									data = DECRYPT(data, common.secret, 'flow');
+									if (!data) {
+										SETTER('message/warning', '@(Invalid data)');
+										return;
+									}
+									data = STRINGIFY(data);
+								}
+								DAPI('clipboard_import @showloading', { data: data }, ASETTER('message/response @hideloading', function(response) {
+									exports.refresh();
+									setTimeout(function() {
+										DAPI('streams_read/' + response.value, ASETTER('message/response', function(response) {
+											SET('streamform @reset', response);
+											SET('common.form', 'streamform');
+										}));
+									}, 1000);
+								}));
+								hide();
+							} else
+								SETTER('message/warning', '@(Invalid data)');
+						});
+						break;
+
 					case 'create':
 						SET('streamform @default', {});
 						SET('common.form', 'streamform');
@@ -276,7 +306,7 @@
 
 		ON('paste', function(text) {
 			var data;
-			if (text.substring(0, 4) === 'flow') {
+			if (!common.form && text.substring(0, 4) === 'flow') {
 				data = DECRYPT(text, common.secret, 'flow');
 				if (data) {
 					SETTER('approve/show', '@(Are you sure you want to import a Flow from the clipboard?)', '@(Import)', function() {

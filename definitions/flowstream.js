@@ -98,6 +98,23 @@ FS.init = function(id, callback) {
 		}
 	});
 
+	flow.onconnect = function(instance) {
+		instance.save = function() {
+			var db = MAIN.flowstream.db[id];
+			if (db) {
+				var item = db.design[instance.id];
+				if (item) {
+					item.x = instance.x;
+					item.y = instance.y;
+					item.note = instance.note;
+					item.config = instance.config;
+					MAIN.flowstream.save();
+					flow.ws && flow.ws.send({ TYPE: 'flow/redraw', id: instance.id, data: item });
+				}
+			}
+		};
+	};
+
 	flow.onerror = function(err) {
 
 		err += '';
