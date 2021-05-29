@@ -6,7 +6,10 @@
 - [Join __Total.js Telegram__](https://t.me/totalplatform)
 - [Support](https://www.totaljs.com/support/)
 
-Total.js FlowStream is a new alternative to the Total.js Flow.
+Total.js FlowStream is a new alternative to the Total.js Flow that integrates the Total.js Message Service (TMS).
+
+- [Download FlowStream components](https://github.com/totaljs/flowstreamcomponents)
+- [Documentation](https://docs.totaljs.com/)
 
 __Requirements__:
 
