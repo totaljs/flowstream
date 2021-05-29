@@ -122,12 +122,14 @@ function socket(id) {
 				break;
 			case 'move':
 				var a = DB.design[message.id];
-				var b = FS.meta.flow[message.id];
-				a.x = b.x = message.data.x;
-				a.y = b.y = message.data.y;
-				MAIN.flowstream.save();
-				message.TYPE = 'flow/move';
-				self.send(message, conn => conn !== client);
+				if (a) {
+					var b = FS.meta.flow[message.id];
+					a.x = b.x = message.data.x;
+					a.y = b.y = message.data.y;
+					MAIN.flowstream.save();
+					message.TYPE = 'flow/move';
+					self.send(message, conn => conn !== client);
+				}
 				break;
 			case 'save':
 				DB.design = message.data;

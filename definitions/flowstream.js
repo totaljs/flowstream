@@ -9,6 +9,10 @@ FS.version = 1;
 FS.db = {};
 FS.instances = {};
 
+PATH.flowstream = function(path) {
+	return path ? PATH.join(DIRECTORY, path) : DIRECTORY;
+};
+
 FS.find = function(ref) {
 	for (var key in FS.db) {
 		var item = FS.db[key];
@@ -58,7 +62,12 @@ FS.save_force = function() {
 		}
 	}
 
-	PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db), ERROR('TMS.save'));
+	if (CONF.backup) {
+		PATH.fs.rename(PATH.join(DIRECTORY, DB_FILE), PATH.join(DIRECTORY, DB_FILE.replace(/\.json/, '') + '_' + (new Date()).format('yyyyMMddHHmm') + '.bk'), function() {
+			PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db), ERROR('TMS.save'));
+		});
+	} else
+		PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db), ERROR('TMS.save'));
 };
 
 FS.load = function() {
@@ -149,12 +158,34 @@ FS.init = function(id, callback) {
 		}
 	});
 
+	var cleanerid;
+	var problematic = [];
+	var cleaner = function() {
+		cleanerid = null;
+		for (var key of problematic) {
+			delete item.components[key];
+			flow.unregister(key);
+		}
+		flow.ws && flow.ws.send({ TYPE: 'flow/components', data: FS.components(true) });
+		MAIN.flowstream.save();
+	};
+
+	var cleanerservice = function() {
+		cleanerid && clearTimeout(cleanerid);
+		cleanerid = setTimeout(cleaner, 500);
+	};
+
 	flow.onregister = function(component) {
 		if (!component.schema && component.schemaid && (component.type === 'pub' || component.type === 'sub')) {
 			var tmp = flow.sources.findItem('id', component.schemaid[0]);
-			var arr = component.type === 'pub' ? tmp.meta.publish : tmp.meta.subscribe;
-			component.schema = arr.findItem('id', component.schemaid[1]);
-			component.itemid = component.schemaid[0];
+			if (tmp && tmp.meta) {
+				var arr = component.type === 'pub' ? tmp.meta.publish : tmp.meta.subscribe;
+				component.schema = arr.findItem('id', component.schemaid[1]);
+				component.itemid = component.schemaid[0];
+			} else {
+				problematic.push(component.id);
+				cleanerservice();
+			}
 		}
 	};
 
@@ -228,6 +259,13 @@ FS.init = function(id, callback) {
 			flow.ws && flow.ws.send({ TYPE: 'dashboard', id: instance.id, component: instance.component, data: status });
 
 	};
+
+	flow.on('schema', function() {
+		if (flow.ready) {
+			for (var key in flow.sockets)
+				flow.sockets[key].synchronize();
+		}
+	});
 
 	// Load components
 	MAIN.tms.refresh(flow, function() {

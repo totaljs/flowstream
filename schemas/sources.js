@@ -57,16 +57,43 @@ NEWSCHEMA('Sources', function(schema) {
 			return;
 		}
 
+		var DB = MAIN.flowstream.db[$.params.fsid];
+
 		var id = $.params.id;
 		var index = FS.sources.findIndex('id', id);
 		if (index !== -1) {
+
 			var app = FS.sources[index];
 			FS.sources.splice(index, 1);
-			// FUNC.refresh();
-			// FUNC.save();
+
+			index = DB.sources.findIndex('id', id);
+			DB.sources.splice(index, 1);
+
+			var unregister = [];
+			var refresh = false;
+
+			for (var key in FS.meta.components) {
+				var com = FS.meta.components[key];
+				if (com.schemaid && com.schemaid[0] === id) {
+					refresh = true;
+					unregister.push(key);
+					delete DB.components[key];
+				}
+			}
+
+			unregister.wait(function(id, next) {
+				FS.unregister(id, next);
+			}, function() {
+				if (refresh && FS.ws) {
+					FS.ws.send({ TYPE: 'flow/components', data: FS.components(true) });
+					FS.ws.send({ TYPE: 'flow/design', data: FS.export() });
+				}
+			});
+
 			app.socket && app.socket.close();
 			MAIN.flowstream.save();
 			$.success();
+
 		} else
 			$.invalid(404);
 	});

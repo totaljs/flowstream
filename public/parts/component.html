@@ -36,6 +36,7 @@
 				FREE();
 			}
 
+			model.body = FUNC.rtrim(model.body);
 			DAPI('components_save @showloading', model, ASETTER('message/response @hideloading', exports.cancel));
 		};
 

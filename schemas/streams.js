@@ -92,6 +92,7 @@ NEWSCHEMA('Streams', function(schema) {
 		var id = $.id;
 		var item = MAIN.flowstream.db[id];
 		if (item) {
+
 			var instance = MAIN.flowstream.instances[id];
 
 			for (var key in instance.sockets)

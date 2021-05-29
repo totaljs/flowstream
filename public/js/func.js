@@ -1,6 +1,16 @@
+var TIDYUPWHITE = new RegExp(String.fromCharCode(160), 'g');
+
 FUNC.import = function(callback) {
 	SET('importform @default', { callback: callback });
 	SET('common.form', 'importform');
+};
+
+FUNC.rtrim = function(value) {
+	var lines = value.split('\n');
+	var reg = /\s+$/;
+	for (var i = 0; i < lines.length; i++)
+		lines[i] = lines[i].replace(reg, '');
+	return lines.join('\n').replace(TIDYUPWHITE, ' ');
 };
 
 (function() {

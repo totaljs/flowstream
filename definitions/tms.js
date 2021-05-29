@@ -252,12 +252,13 @@ MAIN.tms.refresh = function(fs, callback, replace) {
 					readme.push('```');
 
 					var id = 'pub' + item.id + 'X' + m.id;
+					var db = MAIN.flowstream.db[fs.name];
 
 					if (replace) {
-						var db = MAIN.flowstream.db[fs.name];
 						db.components[id] = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, makeschema(m.schema), item.id);
 					} else {
-						var com = fs.add(id, TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, makeschema(m.schema), item.id));
+						db.components[id] = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, makeschema(m.schema), item.id);
+						var com = fs.add(id, db.components[id]);
 						m.url = url;
 						com.type = 'pub';
 						com.itemid = item.id;

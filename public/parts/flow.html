@@ -518,7 +518,8 @@
 		};
 
 		exports.onmove = function(el, item) {
-			SETTER('websocket/send', { TYPE: 'move', id: item.id, data: { x: item.x, y: item.y }});
+			if (item.connected)
+				SETTER('websocket/send', { TYPE: 'move', id: item.id, data: { x: item.x, y: item.y }});
 		};
 
 		// WebSocket messages

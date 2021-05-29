@@ -2,3 +2,4 @@ name                  : FlowStream
 allow_custom_titles   : true
 marketplace           : https://marketplace.totaljs.com
 cdn                   : https://cdn.totaljs.com/flowstream/
+backup                : false
