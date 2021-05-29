@@ -52,6 +52,7 @@ p { font-size: 13px; line-height: 16px; }
 
 .type-pub { background-color: #EDF7FF !important; }
 .type-sub { background-color: #FFEDF8 !important; }
+
 .ui-dark .type-pub { background-color: #193C58 !important; }
 .ui-dark .type-sub { background-color: #5d2d4a !important; }
 
