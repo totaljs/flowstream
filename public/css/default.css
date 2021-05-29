@@ -49,8 +49,12 @@ p { font-size: 13px; line-height: 16px; }
 
 .flowcomponents { padding: 0 5px 0; }
 .flowcomponents figure { height: 32px; font-size: 11px; padding: 0 10px; margin: 0 10px 5px; border-radius: var(--radius); cursor: grab; line-height: 15px; background-color: #F8F8F8; border: 1px solid transparent; }
+
 .type-pub { background-color: #EDF7FF !important; }
 .type-sub { background-color: #FFEDF8 !important; }
+.ui-dark .type-pub { background-color: #193C58 !important; }
+.ui-dark .type-sub { background-color: #5d2d4a !important; }
+
 .flowcomponents figure:hover { border-color: #E0E0E0; }
 .flowcomponents figure i { width: 15px; margin: 8px 10px 0 0; text-align: center; float: left; font-size: 14px; text-align: center; }
 .flowcomponents .name { font-weight: bold; font-size: 12px; padding-top: 7px; }
@@ -62,6 +66,8 @@ p { font-size: 13px; line-height: 16px; }
 
 .tms-pub { background-color: #EDF7FF !important; }
 .tms-sub { background-color: #FFEDF8 !important; }
+.ui-dark .tms-pub { background-color: #193C58 !important; }
+.ui-dark .tms-sub { background-color: #5d2d4a !important; }
 
 .tms-pub .type, .tms-sub .type { font-size: 11px; margin-top: 2px; margin-right: 30px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .tms-pub .type span, .tms-sub .type span { padding: 1px 5px; border-radius: var(--radius); color: #FFF; }
@@ -117,7 +123,8 @@ p { font-size: 13px; line-height: 16px; }
 .ui-dark .ui-flow footer { border-top-color: #404040; }
 .ui-dark .ui-flow-h .input.connected { color: #FFF; }
 
-.markdown pre { background-color: #F8F8F8; overflow: hidden; }
+.markdown pre { background-color: #F8F8F8; overflow: hidden; padding: 10px; border-radius: var(--radius); }
+.ui-dark .markdown pre { background-color: #272727; }
 
 .landing .body { background-color: #FFF; }
 .bg-smoke { background-color: #F8F8F8; }
@@ -232,6 +239,7 @@ p { font-size: 13px; line-height: 16px; }
 .ui-windows-item { box-shadow: 1px 1px 30px rgba(0,0,0,0.25); }
 .ui-windows-body { overflow: hidden; }
 .ui-windows-item iframe { overflow: hidden; width: 100%; height: 100%; border: 0; }
+.ui-dark .ui-windows-item { box-shadow: 1px 1px 30px rgba(0,0,0,0.5); }
 
 .componenteditor { background-color: #FFF; }
 .componenteditor .CodeMirror { border-radius: 0 !important; border-top: 0; border-right: 0; border-left: 0; }
@@ -266,7 +274,7 @@ p { font-size: 13px; line-height: 16px; }
 .flows h2 span { float: right; font-weight: normal; font-size: 14px; margin: 4px 0 0 0; color: #777; }
 
 .flows figure { padding: 10px; width: 15%; max-width: 300px; position: relative; display: inline-block; vertical-align: top; }
-.flows figure section { border: 1px solid #E0E0E0; background-color: #FFF; cursor: pointer; border-radius: var(--radius); box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+.flows figure section { border: 2px solid #E0E0E0; background-color: #FFF; cursor: pointer; border-radius: var(--radius); box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
 .flows figure section:hover { border-color: #D0D0D0; }
 .flows figure .icon { height: 130px; font-size: 40px; text-align: center; line-height: 140px; border-bottom: 1px solid #E0E0E0; overflow: hidden; }
 .flows figure .meta { padding: 10px; font-size: 12px; }
@@ -278,12 +286,18 @@ p { font-size: 13px; line-height: 16px; }
 .flows figure .stats label { display: block; font-size: 11px; color: #777; margin-bottom: 5px; }
 .flows figure .stats label i { margin-right: 5px; }
 .flows figure .stats span { float: right; }
-.flows figure .options { position: absolute; right: 20px; top: 25px; cursor: pointer; width: 25px; text-align: center; }
+.flows figure .options { position: absolute; right: 20px; top: 20px; cursor: pointer; width: 25px; text-align: center; font-size: 18px; }
 .flows figure .reference { position: absolute; left: 22px; top: 25px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold; font-family: Menlo,Consolas,monospace; }
+.flows .inputs { position: absolute; margin: 0; padding: 0; left: 6px; top: 60px; font-size: 11px; color: #A0A0A0; }
+.flows .inputs i { float: left; margin: 1px 5px 0 0; color: #B9261A; }
+.flows .outputs i { float: right; margin: 1px 0 0 5px; color: #2E67C5; }
+.flows .inputs span { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: block; width: 60px; }
+.flows .outputs { position: absolute; margin: 0; padding: 0; right: 6px; top: 60px; font-size: 11px; color: #A0A0A0; text-align: right; }
+.flows .outputs span { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: block; width: 60px; }
 
 .ui-dark .flows figure section { border-color: #404040; background-color: #282828; }
 .ui-dark .flows figure section:hover { border-color: #454545; }
-.ui-dark .flows figure .icon { border-bottom-color: #404040; }
+.ui-dark .flows figure .icon { border-bottom-color: #404040; color: #FFF; }
 .ui-dark .flows figure .meta .name span { color: #FFF; }
 .ui-dark .flows figure .size { color: #888; }
 .ui-dark .flows figure .author { color: #FFF; }

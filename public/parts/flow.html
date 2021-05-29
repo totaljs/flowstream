@@ -42,7 +42,7 @@
 
 		<section data-type="main">
 			<div data---="viewbox__null__parent:auto;visibleX:true;visibleY:true;scrollbar:true;margin:0;scrollbarshadow:1">
-				<div data---="flow__?.data__width:6000;height:6000;grid:16;horizontal:1;snapping:5;steplines:1;infopath:?.info;undopath:?.undo;redopath:?.redo;ondrop:?/drop;contextmenu:?/contextmenu;dblclick:?/settings;outputoffsetY:15;inputoffsetY:15"></div>
+				<div data---="flow__?.data__width:6000;height:6000;grid:16;horizontal:1;snapping:5;steplines:1;infopath:?.info;undopath:?.undo;redopath:?.redo;ondrop:?/drop;contextmenu:?/contextmenu;dblclick:?/settings;outputoffsetY:15;inputoffsetY:15;onmove:?/onmove"></div>
 			</div>
 		</section>
 
@@ -248,7 +248,10 @@
 			W.parent.postMessage(STRINGIFY({ TYPE: 'open', SOURCE: 'flow', id: id }), '*');
 		};
 
-		exports.settings = function(instance) {
+		exports.settings = function(instance, e) {
+
+			if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')
+				return;
 
 			var component = flow.components.findItem('id', instance.component);
 			if (!component || !component.settings)
@@ -382,6 +385,7 @@
 			obj.template = com.template ? Tangular.compile(com.template) : null;
 			obj.onmake = onmake;
 			CMD('flow.components.add', obj);
+			SET('?.changed', true);
 		};
 
 		var loadflow = function(response) {
@@ -513,6 +517,10 @@
 			}
 		};
 
+		exports.onmove = function(el, item) {
+			SETTER('websocket/send', { TYPE: 'move', id: item.id, data: { x: item.x, y: item.y }});
+		};
+
 		// WebSocket messages
 		ON('message', function(msg) {
 			switch (msg.TYPE) {
@@ -605,6 +613,14 @@
 
 				case 'flow/design':
 					loadflow(msg.data);
+					break;
+
+				case 'flow/move':
+					var item = flow.data[msg.id];
+					item.x = msg.data.x;
+					item.y = msg.data.y;
+					item.element.closest('.component').css({ left: item.x, top: item.y });
+					CMD('flow.refresh');
 					break;
 
 				case 'flow/variables':
@@ -713,11 +729,6 @@
 					SET('common.page @hideloading', 'componenteditor');
 				}
 			}
-		});
-
-		WATCH('?.data', function(response, path, type) {
-			if (type === 2)
-				SET('?.changed', true);
 		});
 
 		exports.init();
