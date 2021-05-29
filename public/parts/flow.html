@@ -250,7 +250,7 @@
 
 		exports.settings = function(instance, e) {
 
-			if (e && e.target && e.target.tagName === 'BUTTON' || e.target.tagName === 'A')
+			if (e && e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A'))
 				return;
 
 			var component = flow.components.findItem('id', instance.component);
