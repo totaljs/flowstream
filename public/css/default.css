@@ -2,6 +2,7 @@ html,body { padding: 0; margin: 0; overflow: hidden; }
 body { background-color: #F0F0F0; }
 body.ui-dark { background-color: #202020 !important; }
 p { font-size: 13px; line-height: 16px; }
+.monospace { font-family: Menlo, Consolas, monospace; }
 
 .ml5 { margin-left: 5px; }
 .ml10 { margin-left: 10px; }

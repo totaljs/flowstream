@@ -9,6 +9,21 @@ FS.version = 1;
 FS.db = {};
 FS.instances = {};
 
+require('total4/flowstream').prototypes().Message.variables = function(str, data) {
+	if (str.indexOf('{') !== -1) {
+		str = str.args(this.vars);
+		if (str.indexOf('{') !== -1) {
+			str = str.args(this.instance.main.variables);
+			if (str.indexOf('{') !== -1) {
+				str = str.args(this.instance.main.variables2);
+				if (data == true || (data && typeof(data) === 'object'))
+					str = str.args(data == true ? this.data : data);
+			}
+		}
+	}
+	return str;
+};
+
 PATH.flowstream = function(path) {
 	return path ? PATH.join(DIRECTORY, path) : DIRECTORY;
 };
@@ -102,9 +117,6 @@ FS.init = function(id, callback) {
 	var flow = FLOWSTREAM(id, ERROR('FlowStream "{0}" error'.format(item.name)));
 
 	FS.instances[id] = flow;
-
-	// Interval for statistics
-	flow.interval = 5000;
 
 	flow.sockets = {}; // TMS
 	flow.sources = item.sources ? CLONE(item.sources) : []; // TMS

@@ -738,7 +738,17 @@
 	ON('markdown', function(el) {
 		el.find('pre code').each(function() {
 			var el = $(this);
-			el.aclass('json').html(Thelpers.jsonformat(PARSE(el.html())));
+			var type = 'application/ld+json';
+
+			if (el.hclass('lang-js'))
+				type = 'text/javascript';
+			else if (el.hclass('lang-html'))
+				type = 'text/html';
+			else if (el.hclass('lang-sql'))
+				type = 'text/x-sql';
+
+			el.aclass('cm-s-default');
+			CodeMirror.runMode(FUNC.strim(el.html()).replace(/\t/g, '  '), type, el[0]);
 		});
 	});
 
