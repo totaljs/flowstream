@@ -15,6 +15,7 @@ exports.install = function() {
 
 	// Variables
 	ROUTE('+API    /api/    -variables                        *Variables    --> read');
+	ROUTE('+API    /api/    -variables_streams/{id}           *Variables    --> stream');
 	ROUTE('+API    /api/    +variables_save                   *Variables    --> save');
 
 	// Clipboard
@@ -149,6 +150,8 @@ function socket(id) {
 					instance.variables && instance.variables(DB.variables);
 				}
 				MAIN.flowstream.refresh(id, 'variables');
+				message.TYPE = 'flow/variables';
+				self.send(message, conn => conn !== client);
 				break;
 		}
 	});

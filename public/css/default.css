@@ -51,11 +51,11 @@ p { font-size: 13px; line-height: 16px; }
 .flowcomponents { padding: 0 5px 0; }
 .flowcomponents figure { height: 32px; font-size: 11px; padding: 0 10px; margin: 0 10px 5px; border-radius: var(--radius); cursor: grab; line-height: 15px; background-color: #F8F8F8; border: 1px solid transparent; }
 
-.type-pub { background-color: #EDF7FF !important; }
-.type-sub { background-color: #FFEDF8 !important; }
+.type-pub, .type-input2 { background-color: #EDF7FF !important; }
+.type-sub, .type-output2 { background-color: #FFEDF8 !important; }
 
-.ui-dark .type-pub { background-color: #193C58 !important; }
-.ui-dark .type-sub { background-color: #5d2d4a !important; }
+.ui-dark .type-pub, .ui-dark .type-input2 { background-color: #193C58 !important; }
+.ui-dark .type-sub, .ui-dark .type-output2 { background-color: #5d2d4a !important; }
 
 .flowcomponents figure:hover { border-color: #E0E0E0; }
 .flowcomponents figure i { width: 15px; margin: 8px 10px 0 0; text-align: center; float: left; font-size: 14px; text-align: center; }
@@ -290,12 +290,6 @@ p { font-size: 13px; line-height: 16px; }
 .flows figure .stats span { float: right; }
 .flows figure .options { position: absolute; right: 20px; top: 20px; cursor: pointer; width: 25px; text-align: center; font-size: 18px; }
 .flows figure .reference { position: absolute; left: 22px; top: 25px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold; font-family: Menlo,Consolas,monospace; }
-.flows .inputs { position: absolute; margin: 0; padding: 0; left: 6px; top: 60px; font-size: 11px; color: #A0A0A0; }
-.flows .inputs i { float: left; margin: 1px 5px 0 0; color: #B9261A; }
-.flows .outputs i { float: right; margin: 1px 0 0 5px; color: #2E67C5; }
-.flows .inputs span { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: block; width: 60px; }
-.flows .outputs { position: absolute; margin: 0; padding: 0; right: 6px; top: 60px; font-size: 11px; color: #A0A0A0; text-align: right; }
-.flows .outputs span { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; display: block; width: 60px; }
 
 .ui-dark .flows figure section { border-color: #404040; background-color: #282828; }
 .ui-dark .flows figure section:hover { border-color: #454545; }

@@ -61,8 +61,10 @@ NEWSCHEMA('Streams', function(schema) {
 			model.sources = [];
 			model.dtcreated = NOW;
 			MAIN.flowstream.db[model.id] = model;
-			MAIN.flowstream.init(model.id, ERROR('FlowStream.init'));
-			MAIN.flowstream.refresh(model.id, 'meta');
+			MAIN.flowstream.init(model.id, function(err) {
+				err && ERROR(err, 'FlowStream.init');
+				MAIN.flowstream.refresh(model.id, 'meta');
+			});
 		} else {
 			var item = MAIN.flowstream.db[model.id];
 			if (item) {

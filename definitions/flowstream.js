@@ -276,6 +276,7 @@ FS.init = function(id, callback) {
 		if (flow.ready) {
 			for (var key in flow.sockets)
 				flow.sockets[key].synchronize();
+			FS.refresh_io();
 		}
 	});
 
@@ -289,9 +290,170 @@ FS.init = function(id, callback) {
 			}
 
 			flow.ready = true;
+			FS.refresh_io();
 			callback && callback();
 		});
 	}, true);
+
+};
+
+const TEMPLATE_INPUT = `<script total>
+
+	exports.name = '{title}';
+	exports.icon = '{icon}';
+	exports.config = {};
+	exports.outputs = [{ id: 'data', name: 'Output' }];
+	exports.group = 'Inputs';
+	exports.type = 'input2';
+
+	exports.make = function(instance) {
+	};
+
+</script>
+
+<readme>
+	{readme}
+</readme>
+
+<body>
+	<header>
+		<div><i class="{icon} mr5"></i><span>{title}</span></div>
+	</header>
+</body>`;
+
+const TEMPLATE_OUTPUT = `<script total>
+
+	exports.name = '{title}';
+	exports.icon = '{icon}';
+	exports.config = {};
+	exports.inputs = [{ id: 'data', name: 'Input' }];
+	exports.group = 'Outputs';
+	exports.type = 'output2';
+
+	exports.make = function(instance) {
+
+		var instances = null;
+
+		instance.message = function($) {
+			if (instances && instances.length) {
+				for (var com of instances)
+					com.send('data', $);
+			}
+		};
+
+		instance.flowstream = function() {
+			instances = [];
+			for (var key in MAIN.flowstream.instances) {
+				var fs = MAIN.flowstream.instances[key];
+				for (var fid in fs.meta.flow) {
+					var fi = fs.meta.flow[fid];
+					var com = fs.meta.components[fi.component];
+					if (com.type === 'input')
+						instances.push(fi);
+				}
+			}
+		};
+
+		instance.configure = function() {
+			MAIN.flowstream.refresh_io();
+		};
+
+		setTimeout(() => instance.flowstream(), 500);
+	};
+
+</script>
+
+<readme>
+	{readme}
+</readme>
+
+<body>
+	<header>
+		<div><i class="{icon} mr5"></i><span>{title}</span></div>
+	</header>
+</body>`;
+
+
+var refreshioid;
+
+// Refreshes Inputs/Outputs component
+FS.refresh_io = function() {
+	refreshioid && clearTimeout(refreshioid);
+	refreshioid = setTimeout(FS.refresh_io_force, 500);
+};
+
+FS.refresh_io_force = function() {
+
+	refreshioid = null;
+
+	var components = [];
+
+	for (var key in MAIN.flowstream.instances) {
+		var instance = MAIN.flowstream.instances[key];
+		var db = MAIN.flowstream.db[key];
+		for (var a in instance.meta.flow) {
+			var fi = instance.meta.flow[a];
+			var ci = instance.meta.components[fi.component];
+			if (ci.type === 'input' || ci.type === 'output')
+				components.push({ id: key + '_' + a, fsid: key, flow: db.name, name: fi.config.name, readme: fi.config.readme, icon: db.icon, reference: db.reference, type: ci.type });
+		}
+	}
+
+	var ts = Date.now().toString(36) + '';
+	var checksum = {};
+	var isrefresh = false;
+
+	Object.keys(MAIN.flowstream.instances).wait(function(key, next) {
+		var instance = MAIN.flowstream.instances[key];
+		var db = MAIN.flowstream.db[key];
+		components.wait(function(com, next) {
+			if (com.fsid !== key) {
+
+				var a = instance.meta.components[com.id];
+				if (a && a.ui)
+					checksum[com.id] = a.ui.checksum;
+
+				var arg = {};
+				arg.title = com.flow + ': ' + com.name;
+				arg.name = com.name;
+				arg.readme = com.readme;
+				arg.icon = com.icon;
+				arg.reference = com.reference;
+				db.components[com.id] = com.type === 'input' ? TEMPLATE_OUTPUT.arg(arg) : TEMPLATE_INPUT.arg(arg);
+				var imported = instance.add(com.id, db.components[com.id], next);
+				imported.ts = ts;
+				if (checksum[com.id] !== imported.ui.checksum) {
+					checksum[com.id] = imported.ui.checksum;
+					isrefresh = true;
+				}
+			} else
+				next();
+		}, next);
+	}, function() {
+
+		for (var key in MAIN.flowstream.instances) {
+			var instance = MAIN.flowstream.instances[key];
+			for (var comid in instance.meta.components) {
+				var com = instance.meta.components[comid];
+				if ((com.type === 'input2' || com.type === 'output2') && com.ts !== ts) {
+					instance.unregister(comid);
+					delete MAIN.flowstream.db[key].components[comid];
+				}
+			}
+		}
+
+		// clean removed
+		MAIN.flowstream.save();
+
+		if (isrefresh) {
+			for (var key in MAIN.flowstream.instances) {
+				var instance = MAIN.flowstream.instances[key];
+				instance.ws && instance.ws.send({ TYPE: 'flow/components', data: instance.components(true) });
+			}
+		}
+
+	});
+
 
 };
 
