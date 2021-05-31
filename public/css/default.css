@@ -1,6 +1,8 @@
 html,body { padding: 0; margin: 0; overflow: hidden; }
 body { background-color: #F0F0F0; }
+.opbody { background-color: #F0F0F0 !important; }
 body.ui-dark { background-color: #202020 !important; }
+.ui-dark.opbody { background-color: #202020 !important; }
 p { font-size: 13px; line-height: 16px; }
 .monospace { font-family: Menlo, Consolas, monospace; }
 
@@ -9,7 +11,7 @@ p { font-size: 13px; line-height: 16px; }
 
 .ui-dockable-layout { z-index: 1; }
 
-.header { background-color: #FFF; height: 45px; border-bottom: 1px solid #E0E0E0; padding-left: 10px; position: absolute; z-index: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); left: 0; right: 0; }
+.header { background-color: #FFF; height: 45px; border-bottom: 1px solid #E0E0E0; padding-left: 8px; position: absolute; z-index: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); left: 0; right: 0; }
 .header-empty { height: 45px; }
 .header button, .header a { margin: 6px 2px 0 0; float: left; border: 0; background-color: transparent; border-radius: var(--radius); padding: 0; min-width: 34px; height: 32px; font-size: 16px; line-height: 32px; text-decoration: none !important; text-align: center; color: #000; }
 .header button b { position: absolute; margin: 12px 0 0 4px; }
@@ -27,7 +29,7 @@ p { font-size: 13px; line-height: 16px; }
 .header button:disabled { color: #D0D0D0; cursor: not-allowed; background-color: transparent !important; }
 .header button.selected { background-color: #F0F0F0; }
 .header button.special, header a.special { color: #99982F; }
-.header > div { float: left; margin: 0 0 0 10px; padding-right: 10px; border-right: 1px solid #E0E0E0; height: 44px; }
+.header > div { float: left; margin: 0 0 0 8px; padding-right: 6px; border-right: 1px solid #E0E0E0; height: 44px; }
 .header > div:first-child { margin-left: 0; }
 
 .ui-dark .header { background-color: #202020; border-bottom-color: #404040; }

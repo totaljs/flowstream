@@ -79,6 +79,29 @@
 	if (!W.flow)
 		W.flow = { data: {}, note: {}, config: {}, variables: {}, variables2: {}, status: {}, errors: {}, calls: {} };
 
+	common.openplatform && (function() {
+
+		// OpenPlatform
+		var qt = NAV.query.openplatform || '';
+		var qr = NAV.query.rev || '';
+		var ql = NAV.query.language || '';
+
+		ON('request', function(opt) {
+
+			if (opt.url.charAt(0) !== '/' && opt.url.indexOf(location.origin) === -1)
+				return;
+
+			var index = opt.url.indexOf('?');
+			var raw = index === -1 ? opt.url : opt.url.substring(0, index);
+			raw = raw.substring(raw.indexOf('/', 9) + 1);
+			var end = raw.substring(raw.length - 10);
+			index = end.indexOf('.');
+			if (index === -1)
+				opt.headers.Authorization = 'base64 ' + btoa(qt + ',' + qr + ',' + ql);
+		});
+
+	})();
+
 	// Reads flow statuses
 	SETTER(true, 'websocket/send', { TYPE: 'flow' });
 
@@ -93,7 +116,7 @@
 		exports.init = function() {
 			flowstreamid = NAV.url.split('/')[2];
 			common.flowstreamid = flowstreamid;
-			ADD('websocket__null__url:/flows/{0}/?openplatform={1}'.format(flowstreamid, NAV.query.openplatform || '') + ';encoder:false');
+			ADD('websocket__null__url:/flows/{0}/?openplatform={1}'.format(flowstreamid, encodeURIComponent(NAV.query.openplatform || '')) + ';encoder:false');
 		};
 
 		exports.reload = function() {

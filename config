@@ -1,5 +1,7 @@
 name                  : FlowStream
 allow_custom_titles   : true
 marketplace           : https://marketplace.totaljs.com
-cdn                   : https://cdn.totaljs.com/flowstream/
+cdn_components        : https://cdn.totaljs.com/flowstream/
+cdn                   : https://cdn.componentator.com
 backup                : false
+// openplatform          : true

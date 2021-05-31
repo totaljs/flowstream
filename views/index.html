@@ -70,6 +70,7 @@
 <script>
 
 	SETTER(true, 'loading/hide', 500);
+	W.OP && W.OP.jcomponent();
 
 	$(document).on('mouseenter mouseleave', '.tooltip', function(e) {
 		if (e.type === 'mouseenter') {
@@ -125,7 +126,7 @@
 				} else {
 					var w = (WW / 1.4) >> 0;
 					var h = (WH / 1.4) >> 0;
-					PUSH('?.windows', { id: id, offset: { x: (WW / 2 - w / 2) >> 0, y: (WH / 2 - h / 2) >> 0, width: w, height: h, minwidth: 200, minheight: 200 }, title: item.name + (item.reference ? (': ' + item.reference) : ''), html: '<iframe src="/flows/{0}/?darkmode={1}" scrolling="no" frameborder="0"></iframe>'.format(id, $('body').hclass('ui-dark') ? '1' : '0'), actions: { minimize: false, maximize: true, move: true, resize: true, close: true, menu: false, autosave: true }});
+					PUSH('?.windows', { id: id, offset: { x: (WW / 2 - w / 2) >> 0, y: (WH / 2 - h / 2) >> 0, width: w, height: h, minwidth: 200, minheight: 200 }, title: item.name + (item.reference ? (': ' + item.reference) : ''), html: '<iframe src="/flows/{0}/?darkmode={1}&openplatform={2}" scrolling="no" frameborder="0"></iframe>'.format(id, $('body').hclass('ui-dark') ? '1' : '0', encodeURIComponent(NAV.query.openplatform || '')), actions: { minimize: false, maximize: true, move: true, resize: true, close: true, menu: false, autosave: true }});
 				}
 			}
 		};
