@@ -17,21 +17,7 @@ NEWSCHEMA('Streams', function(schema) {
 			if (key !== 'variables') {
 				var item = MAIN.flowstream.db[key];
 				var instance = MAIN.flowstream.instances[key];
-				var outputs = [];
-				var inputs = [];
-
-				for (var id in instance.meta.flow) {
-					var fi = instance.meta.flow[id];
-					var ci = instance.meta.components[fi.component];
-					if (ci) {
-						if (ci.type === 'output')
-							outputs.push({ name: fi.config.name, note: fi.note });
-						if (ci.type === 'input')
-							inputs.push({ name: fi.config.name, note: fi.note });
-					}
-				}
-
-				arr.push({ id: item.id, name: item.name, group: item.group, author: item.author, reference: item.reference, url: item.url, color: item.color, icon: item.icon, readme: item.readme, dtcreated: item.dtcreated, dtupdated: item.dtupdated, errors: !!instance.errors.length, stats: instance.stats, size: item.size || 0, version: item.version, outputs: outputs, inputs: inputs });
+				arr.push({ id: item.id, name: item.name, group: item.group, author: item.author, reference: item.reference, url: item.url, color: item.color, icon: item.icon, readme: item.readme, dtcreated: item.dtcreated, dtupdated: item.dtupdated, errors: false, stats: {}, size: item.size || 0, version: item.version, stats: instance.flow.stats });
 			}
 		}
 		$.callback(arr);
@@ -58,13 +44,10 @@ NEWSCHEMA('Streams', function(schema) {
 			model.design = {};
 			model.components = {};
 			model.variables = {};
-			model.sources = [];
+			model.sources = {};
 			model.dtcreated = NOW;
 			MAIN.flowstream.db[model.id] = model;
-			MAIN.flowstream.init(model.id, function(err) {
-				err && ERROR(err, 'FlowStream.init');
-				MAIN.flowstream.refresh(model.id, 'meta');
-			});
+			MAIN.flowstream.init(model.id, ERROR('FlowStream.init'));
 		} else {
 			var item = MAIN.flowstream.db[model.id];
 			if (item) {
@@ -78,7 +61,7 @@ NEWSCHEMA('Streams', function(schema) {
 				item.group = model.group;
 				item.color = model.color;
 				item.readme = model.readme;
-				MAIN.flowstream.refresh(model.id, 'meta');
+				// MAIN.flowstream.refresh(model.id, 'meta');
 			} else {
 				$.invalid(404);
 				return;
@@ -94,16 +77,8 @@ NEWSCHEMA('Streams', function(schema) {
 		var id = $.id;
 		var item = MAIN.flowstream.db[id];
 		if (item) {
-
-			var instance = MAIN.flowstream.instances[id];
-
-			for (var key in instance.sockets)
-				instance.sockets[key].destroy();
-
-			instance.sockets = null;
-			instance.destroy();
-			instance.ws && instance.ws.destroy();
 			delete MAIN.flowstream.db[id];
+			MAIN.flowstream.instances[id].destroy();
 			MAIN.flowstream.save();
 			AUDIT($);
 			$.success();
@@ -129,9 +104,11 @@ NEWSCHEMA('Streams', function(schema) {
 
 		for (var key in MAIN.flowstream.instances) {
 			var flow = MAIN.flowstream.instances[key];
-			data.messages += flow.stats.messages;
-			data.mm += flow.stats.mm;
-			data.pending += flow.stats.pending;
+			if (flow.flow && flow.flow.stats) {
+				data.messages += flow.flow.stats.messages;
+				data.mm += flow.flow.stats.mm;
+				data.pending += flow.flow.stats.pending;
+			}
 		}
 
 		$.callback(data);

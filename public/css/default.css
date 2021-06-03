@@ -50,85 +50,12 @@ p { font-size: 13px; line-height: 16px; }
 .ui-dark .ui-layout-right { background-color: #222; }
 .ui-dark .ui-layout-left .ui-searchinput { border-bottom-color: #404040; }
 
-.flowcomponents { padding: 0 5px 0; }
-.flowcomponents figure { height: 32px; font-size: 11px; padding: 0 10px; margin: 0 10px 5px; border-radius: var(--radius); cursor: grab; line-height: 15px; background-color: #F8F8F8; border: 1px solid transparent; }
-
-.type-pub, .type-input2 { background-color: #EDF7FF !important; }
-.type-sub, .type-output2 { background-color: #FFEDF8 !important; }
-
-.ui-dark .type-pub, .ui-dark .type-input2 { background-color: #193C58 !important; }
-.ui-dark .type-sub, .ui-dark .type-output2 { background-color: #5d2d4a !important; }
-
-.flowcomponents figure:hover { border-color: #E0E0E0; }
-.flowcomponents figure i { width: 15px; margin: 8px 10px 0 0; text-align: center; float: left; font-size: 14px; text-align: center; }
-.flowcomponents .name { font-weight: bold; font-size: 12px; padding-top: 7px; }
-.flowcomponents .name span { font-weight: normal; font-size: 11px; float: right; color: #777; }
-.flowcomponents .name em { font-weight: normal; font-size: 11px; color: #777; margin-left: 5px; }
-.flowcomponents .caption { padding: 12px 10px 5px; font-size: 12px; color: #999; }
-.ui-flow-h .output:last-child { border-radius: 0; }
-.ui-flow-h .input:last-child { border-radius: 0; }
-
-.tms-pub { background-color: #EDF7FF !important; }
-.tms-sub { background-color: #FFEDF8 !important; }
-.ui-dark .tms-pub { background-color: #193C58 !important; }
-.ui-dark .tms-sub { background-color: #5d2d4a !important; }
-
-.tms-pub .type, .tms-sub .type { font-size: 11px; margin-top: 2px; margin-right: 30px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-.tms-pub .type span, .tms-sub .type span { padding: 1px 5px; border-radius: var(--radius); color: #FFF; }
-.tms-pub .type2 span, .tms-sub .type2 span { color: #999; background-color: #E5E5E5; }
-.tms-pub .url, .tms-sub .url { font-size: 11px; margin-top: 2px; margin-right: 30px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; color: #999; }
-.tms-pub .schema, .tms-sub .schema { font-weight: bold; font-size: 14px; padding-top: 4px; }
-.tms-pub .caption, .tms-sub .caption { padding: 12px 10px 5px; font-size: 12px; color: #999; }
-.tms-pub .schema, .tms-sub .schema { padding: 5px 10px 10px; border-top: 1px solid rgba(0,0,0,0.1); line-height: 16px; }
-.tms-pub .schema span, .tms-sub .schema span { font-size: 11px; background-color: rgba(0,0,0,0.1); padding: 1px 4px; border-radius: var(--radius); color: #FFF; }
-.tms-pub .schema code, .tms-sub .schema code { font-size: 11px; font-family: Menlo,Consolas,monospace; margin-right: 5px; }
-
-.ui-dark .flowcomponents figure { background-color: #303030; }
-.ui-dark .flowcomponents figure:hover { border-color: #404040; }
-.ui-dark .flowcomponents .type span { color: #FFF; }
-.ui-dark .flowcomponents .type2 span { color: #999; background-color: #4E4E4E; }
-.ui-dark .flowcomponents .url { color: #999; }
-.ui-dark .flowcomponents .caption { color: #999; }
-
-.controls { float: right; margin-right: 10px; }
-.controls button { width: 22px; height: 22px; border: 0; background-color: #FFF; line-height: 22px; padding: 0 5px; border-radius: var(--radius); margin-left: 2px; }
-.controls button:first-child { margin-left: 0; }
-.controls button:hover { background-color: #F0F0F0; }
-
-.ui-dark .controls button { background-color: transparent; }
-.ui-dark .controls button:hover { background-color: #303030; }
-
 .ui-largeform-options { float: right; height: 30px; background-color: #F0F0F0; border: 1px solid #F0F0F0; line-height: 30px; font-size: 12px; border-radius: var(--radius); margin: 15px 18px 0 0; padding: 0 8px; cursor: pointer; }
 .ui-largeform-options i { margin-right: 5px; }
 .ui-largeform-options:hover { border-color: #E0E0E0; }
 
 .ui-dark .ui-largeform-options { background-color: #333; border-color: #333; }
 .ui-dark .ui-largeform-options:hover { border-color: #404040; }
-
-.flow .stats { height: 30px; background-color: #FFF; line-height: 30px; padding: 0 10px; font-size: 11px; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; }
-.ui-dark .flow .stats { background-color: #252525; }
-
-.ui-flow header { padding: 8px; }
-.ui-flow header i { color: var(--color); margin-right: 5px; }
-.ui-flow .component { box-shadow: 2px 2px 10px rgba(0,0,0,0.1); border-width: 2px; max-width: 450px; }
-.ui-flow .component.isnewbie { border-color: #68B25B; }
-.ui-flow .component.iserror { border-color: red; }
-.ui-flow-h summary { padding: 10px; font-size: 12px; font-style: normal; border-top: 1px solid rgba(0,0,0,0.05); display: block; }
-.ui-flow-h .output { line-height: 30px; font-size: 14px; }
-.ui-flow-h .output .component-io { line-height: 20px; margin-top: 8px; }
-.ui-flow-h .input { line-height: 30px; font-size: 14px; }
-.ui-flow-h .input .component-io { line-height: 20px; margin-top: 8px; }
-.ui-flow-h .input.connected { color: #000; font-weight: bold; }
-.ui-flow-h .output.connected { font-weight: bold; }
-.ui-flow .connection { stroke-width: 2.5px; }
-.ui-flow .content { padding: 0; }
-.ui-flow footer { border-top: 1px solid rgba(0,0,0,0.1); }
-
-.ui-dark .ui-flow footer { border-top-color: #404040; }
-.ui-dark .ui-flow-h .input.connected { color: #FFF; }
-
-.markdown pre { background-color: #F8F8F8; overflow: hidden; padding: 10px; border-radius: var(--radius); }
-.ui-dark .markdown pre { background-color: #272727; }
 
 .landing .body { background-color: #FFF; }
 .bg-smoke { background-color: #F8F8F8; }
@@ -245,25 +172,6 @@ p { font-size: 13px; line-height: 16px; }
 .ui-windows-item iframe { overflow: hidden; width: 100%; height: 100%; border: 0; }
 .ui-dark .ui-windows-item { box-shadow: 1px 1px 30px rgba(0,0,0,0.5); }
 
-.componenteditor { background-color: #FFF; }
-.componenteditor .CodeMirror { border-radius: 0 !important; border-top: 0; border-right: 0; border-left: 0; }
-.componenteditor nav { height: 60px; padding: 0 15px; }
-.componenteditor > nav button { border: 0; margin: 15px 0 0; background-color: #F0F0F0; height: 34px; padding: 0 15px; color: #000; cursor: pointer; font-family: Arial; line-height: 34px; vertical-align: middle; outline: 0; font-size: 14px; text-decoration: none; transition: all 0.3s; float: left; min-width: 120px; }
-.componenteditor > nav button i { width: 15px; text-align: center; margin-right: 5px; }
-.componenteditor > nav button:hover { opacity: 0.9; }
-.componenteditor > nav button:active { background-color: #D0D0D0; }
-.componenteditor > nav button:disabled { background-color: #F5F5F5 !important; border-color: #E0E0E0 !important; color: silver !important; cursor: not-allowed; box-shadow: none; }
-.componenteditor > nav button:first-child { border-top-left-radius: var(--radius); border-bottom-left-radius: var(--radius); }
-.componenteditor > nav button:last-child { border-top-right-radius: var(--radius); border-bottom-right-radius: var(--radius); }
-.componenteditor > nav button[name='submit'] { font-weight: bold; background-color: var(--color); color: #FFF; min-width: 250px; }
-.componenteditor .help { float: right; }
-
-.ui-dark .componenteditor { background-color: #202020; }
-.ui-dark .componenteditor > nav button { background-color: #333; color: #D0D0D0; }
-.ui-dark .componenteditor > nav button:active { background-color: #404040; }
-.ui-dark .componenteditor > nav button:disabled { background-color: #292929 !important; border-color: #353535 !important; color: silver !important; }
-.ui-dark .componenteditor > nav button[name='submit'] { background-color: var(--color); color: #FFF; }
-
 .landing .listing .icon { float: left; width: 50px; height: 50px; font-size: 25px; }
 .landing footer { height: 30px; background-color: #FFF; line-height: 30px; padding: 0; font-size: 11px; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .landing footer span { float: left; padding: 0 0 0 10px; width: 25%; }
@@ -286,7 +194,7 @@ p { font-size: 13px; line-height: 16px; }
 .flows figure .meta .name span { color: #FFF; border-radius: var(--radius); line-height: 12px; font-size: 11px; padding: 1px 3px; float: right; margin: 4px 5px 0 0; font-weight: normal; }
 .flows figure .size { font-size: 11px; color: #A0A0A0; margin-bottom: 2px; }
 .flows figure .author { font-size: 11px; color: #000; }
-.flows figure .stats { padding: 10px; font-size: 11px; border-top: 1px solid #E0E0E0; }
+.flows figure .stats { padding: 10px; font-size: 11px; border-top: 1px solid #E0E0E0; line-height: 12px; }
 .flows figure .stats label { display: block; font-size: 11px; color: #777; margin-bottom: 5px; }
 .flows figure .stats label i { margin-right: 5px; }
 .flows figure .stats span { float: right; }

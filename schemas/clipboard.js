@@ -30,7 +30,9 @@ NEWSCHEMA('Clipboard', function(schema) {
 		if (!data.variables)
 			data.variables = {};
 
+		data.variables2 = MAIN.flowstream.variables || {};
 		data.dtcreated = NOW;
+
 		delete data.dtupdated;
 		MAIN.flowstream.db[data.id] = data;
 		MAIN.flowstream.init(data.id, function(err) {
