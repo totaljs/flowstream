@@ -369,7 +369,7 @@ function init_current(meta) {
 					break;
 
 				case 'stream/trigger':
-					let tmp = flow.meta.flow[meta.id];
+					var tmp = flow.meta.flow[meta.id];
 					if (tmp && tmp.trigger)
 						tmp.trigger(msg.data);
 					break;
@@ -551,7 +551,7 @@ function init_current(meta) {
 		};
 
 		flow.proxy.error = function(err, type) {
-			flow.socket && flow.$socket.send({ TYPE: 'flow/error', error: error, type: type });
+			flow.socket && flow.$socket.send({ TYPE: 'flow/error', error: err, type: type });
 		};
 
 		flow.proxy.done = function(err) {
@@ -908,7 +908,10 @@ function MAKEFLOWSTREAM(meta) {
 	};
 
 	var refresh_components = function() {
-		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
+		if (flow.proxy.online) {
+			flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
+			flow.proxy.send({ TYPE: 'flow/design', data: flow.export() });
+		}
 	};
 
 	flow.sources = meta.sources;
@@ -1062,8 +1065,8 @@ function MAKEFLOWSTREAM(meta) {
 				if (source) {
 					delete flow.sources[msg.id];
 					flow.sockets[msg.id] && flow.sockets[msg.id].destroy();
-					for (var key in fs.meta.components) {
-						var com = fs.meta.components[key];
+					for (var key in flow.meta.components) {
+						var com = flow.meta.components[key];
 						if (com.schemaid && com.schemaid[0] === msg.id)
 							flow.unregister(key);
 					}
@@ -1183,7 +1186,9 @@ function MAKEFLOWSTREAM(meta) {
 			flow.unregister(key);
 		}
 
-		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/components', data: FS.components(true) });
+		if (flow.proxy.online)
+			refresh_components();
+
 		save();
 	};
 
