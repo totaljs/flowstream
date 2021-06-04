@@ -40,7 +40,7 @@ FS.init = function(id, next) {
 
 	flow.variables2 = FS.db.variables || {};
 
-	var instance = MODULE('flowstream').init(flow, true);
+	var instance = MODULE('flowstream').init(flow, CONF.flowstream_worker);
 
 	instance.ondone = () => next();
 	instance.onerror = (err, type) => console.log('FlowError', err, type);
