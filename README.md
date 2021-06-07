@@ -13,6 +13,6 @@ Total.js FlowStream is a new alternative to the Total.js Flow that integrates th
 
 __Requirements__:
 
-- Total.js 4 - `$ npm install total4@beta`
+- Total.js 4 - `$ npm install total4`
 
 ![FlowStream](https://cdn.totaljs.com/images/flowstream.png)
