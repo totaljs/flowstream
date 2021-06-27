@@ -1591,9 +1591,11 @@ TMS.connect = function(fs, sourceid, callback) {
 						client.subscribers[sub.id] = 1;
 					}
 
-					for (var i = 0; i < msg.call.length; i++) {
-						var call = msg.call[i];
-						client.calls[call.id] = 1;
+					if (msg.call) {
+						for (var i = 0; i < msg.call.length; i++) {
+							var call = msg.call[i];
+							client.calls[call.id] = 1;
+						}
 					}
 
 					if (item.checksum !== checksum) {
