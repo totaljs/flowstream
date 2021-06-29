@@ -344,6 +344,14 @@ exports.init = function(meta, isworker) {
 	return isworker ? init_worker(meta) : init_current(meta);
 };
 
+exports.exec = function(id, opt) {
+	var fs = FLOWS[id];
+	if (fs)
+		fs.exec(id, opt);
+	else if (opt.callback)
+		opt.callback(404);
+};
+
 exports.input = function(ffsid, fid, tfsid, tid, data) {
 	if (tfsid) {
 		var fs = FLOWS[tfsid];
