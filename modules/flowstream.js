@@ -1460,6 +1460,10 @@ TMS.check = function(item, callback) {
 
 		client.on('message', function(msg) {
 			switch (msg.type) {
+				case 'ping':
+					msg.type = 'pong';
+					client.send(msg);
+					break;
 				case 'meta':
 					callback(null, msg);
 					clearTimeout(client.timeout);
