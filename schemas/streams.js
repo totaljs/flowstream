@@ -17,7 +17,7 @@ NEWSCHEMA('Streams', function(schema) {
 			if (key !== 'variables') {
 				var item = MAIN.flowstream.db[key];
 				var instance = MAIN.flowstream.instances[key];
-				arr.push({ id: item.id, name: item.name, group: item.group, author: item.author, reference: item.reference, url: item.url, color: item.color, icon: item.icon, readme: item.readme, dtcreated: item.dtcreated, dtupdated: item.dtupdated, errors: false, stats: {}, size: item.size || 0, version: item.version, stats: instance.flow.stats });
+				arr.push({ id: item.id, name: item.name, group: item.group, author: item.author, reference: item.reference, url: item.url, color: item.color, icon: item.icon, readme: item.readme, dtcreated: item.dtcreated, dtupdated: item.dtupdated, errors: false, size: item.size || 0, version: item.version, stats: instance ? instance.flow.stats : {} });
 			}
 		}
 		$.callback(arr);

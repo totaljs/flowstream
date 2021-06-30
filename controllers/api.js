@@ -13,7 +13,7 @@ exports.install = function() {
 
 	// Clipboard
 	ROUTE('+API    /api/    -clipboard_export/id              *Clipboard    --> export');
-	ROUTE('+API    /api/    +clipboard_import                 *Clipboard    --> import');
+	ROUTE('+API    /api/    +clipboard_import                 *Clipboard    --> import', [60000 * 5]);
 
 	// Socket
 	ROUTE('+SOCKET  /flows/{id}/', socket, 1024 * 5);
