@@ -57,6 +57,7 @@ var CALLBACKID = 0;
 */
 
 function Instance(instance, id) {
+	this.version = VERSION;
 	this.id = id;
 	this.flow = instance;
 }
@@ -1361,8 +1362,8 @@ function MAKEFLOWSTREAM(meta) {
 			save();
 		};
 
-		instance.newflowstream = function(meta, isworker) {
-			return exports.init(meta, isworker);
+		instance.newflowstream = function(meta, isworker, callback) {
+			return exports.init(meta, isworker, callback);
 		};
 
 		instance.io = function(flowstreamid, id, callback) {
