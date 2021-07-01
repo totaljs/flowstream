@@ -1,5 +1,11 @@
-name                  : FlowStream
-allow_custom_titles   : true
-cdn                   : https://cdn.componentator.com
-backup                : false
-flowstream_worker     : true
+name                    : FlowStream
+allow_custom_titles     : true
+cdn                     : https://cdn.componentator.com
+backup                  : false
+flowstream_worker       : true
+
+// Disables: Worker/Fork
+// flowstream_worker       : false
+
+// Replaces WorkerThread for Fork
+// flowstream_worker       : fork
