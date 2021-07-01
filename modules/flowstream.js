@@ -2031,7 +2031,7 @@ if (process.argv.indexOf('--fork') !== -1) {
 			Parent = process;
 			if (!Parent.postMessage)
 				Parent.postMessage = process.send;
-			F.dir(PATH.join(__dirname, '../'));
+			F.dir(process.argv[2]);
 			exports.init(msg.data);
 		}
 	});
