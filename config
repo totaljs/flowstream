@@ -7,5 +7,5 @@ flowstream_worker       : true
 // Disables: Worker/Fork
 // flowstream_worker       : false
 
-// Replaces WorkerThread for Fork
+// Replaces WorkerThread for the ChildProcess/Fork
 // flowstream_worker       : fork
