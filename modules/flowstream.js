@@ -118,7 +118,7 @@ Instance.prototype.destroy = function() {
 		if (self.flow.terminate)
 			self.flow.terminate();
 		else
-			self.flow.exit(9);
+			self.flow.kill(9);
 	} else {
 		if (self.flow.sockets) {
 			for (var key in self.flow.sockets)
