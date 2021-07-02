@@ -1,6 +1,7 @@
 name                    : FlowStream
 allow_custom_titles     : true
 cdn                     : https://cdn.componentator.com
+flowstream_designer     : flowstreamdesigner.totaljs.com
 backup                  : false
 flowstream_worker       : true
 
