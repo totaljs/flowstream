@@ -157,6 +157,17 @@
 
 			opt.callback = function(opt) {
 				switch (opt.id) {
+					case 'variables':
+						DAPI('variables?id=' + id, ASETTER('message/response', function(response) {
+							var model = {};
+							model.variables = response;
+							model.callback = function(model) {
+								DAPI('variables_save', { id: id, data: model }, ASETTER('notifybar/success', '@(Variables have been changed successfully.)'));
+							};
+							SET('variablesform @reset', model);
+							SET('common.form', 'variablesform');
+						}));
+						break;
 					case 'settings':
 						exports.settings(item);
 						break;
