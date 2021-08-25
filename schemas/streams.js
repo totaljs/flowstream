@@ -114,4 +114,21 @@ NEWSCHEMA('Streams', function(schema) {
 		$.callback(data);
 	});
 
+	schema.addWorkflow('pause', function($) {
+		var id = $.id;
+		var item = MAIN.flowstream.db[id];
+		if (item) {
+			var is = $.query.is ? ($.query.is === '1') : null;
+			var instance = MAIN.flowstream.instances[id];
+
+			if (instance.flow.stats && is != null)
+				instance.flow.stats.paused = is;
+
+			instance.pause(is);
+			$.success();
+		} else
+			$.invalid(404);
+
+	});
+
 });

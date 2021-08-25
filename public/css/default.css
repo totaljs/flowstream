@@ -185,6 +185,9 @@ p { font-size: 13px; line-height: 16px; }
 .flows h2 { margin: 0 0 10px 10px; padding: 5px 0; font-size: 18px; border-bottom: 2px solid #D0D0D0; }
 .flows h2 span { float: right; font-weight: normal; font-size: 14px; margin: 4px 0 0 0; color: #777; }
 
+.flows .ispaused { display: none; }
+.flows .paused .ispaused { display: block; position: absolute; margin: 15px 0 0 15px; font-size: 20px; color: red; }
+.flows .paused section { border-color: red !important; }
 .flows figure { padding: 10px; width: 15%; max-width: 300px; position: relative; display: inline-block; vertical-align: top; }
 .flows figure section { border: 2px solid #E0E0E0; background-color: #FFF; cursor: pointer; border-radius: var(--radius); box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
 .flows figure section:hover { border-color: #D0D0D0; }
