@@ -235,6 +235,7 @@ p { font-size: 13px; line-height: 16px; }
 
 .ui-windows-item { z-index: 15; }
 .ui-windows-focused { z-index: 16; }
+.ui-windows-resizer { z-index: 17; }
 .landing .ui-empty-cell > i { background-color: #FFF; }
 
 .ui-largeform .search { height: 30px; }
