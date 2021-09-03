@@ -254,7 +254,7 @@ function readinstance(flow, id) {
 	var tmp = flow.meta.flow[id];
 	var com = flow.meta.components[tmp.component];
 	if (com.type === 'output' || com.type === 'input' || com.type === 'config')
-		return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, type: com.type, readme: tmp.config.readme };
+		return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, type: com.type, readme: tmp.config.readme, outputs: tmp.outputs, inputs: tmp.inputs };
 }
 
 // Reads all inputs, outputs, publish, subscribe instances
@@ -989,6 +989,43 @@ function MAKEFLOWSTREAM(meta) {
 
 	var saveid;
 
+	flow.export = function() {
+
+		var self = this;
+		var output = {};
+
+		for (var key in self.meta.flow) {
+
+			var com = self.meta.flow[key];
+			if (key === 'paused') {
+				output[key] = CLONE(com);
+				continue;
+			}
+
+			var tmp = {};
+			tmp.x = com.x;
+			tmp.y = com.y;
+			tmp.stats = CLONE(com.stats);
+			tmp.connections = CLONE(com.connections);
+			tmp.id = com.id;
+			tmp.config = CLONE(com.config);
+			tmp.component = com.component;
+			tmp.connected = true;
+			tmp.note = com.note;
+			tmp.reference = com.reference;
+
+			if (com.outputs)
+				tmp.outputs = com.outputs;
+
+			if (com.inputs)
+				tmp.inputs = com.inputs;
+
+			output[tmp.id] = tmp;
+		}
+
+		return output;
+	};
+
 	flow.export2 = function() {
 		var variables = flow.variables;
 		var design = {};
@@ -1017,6 +1054,13 @@ function MAKEFLOWSTREAM(meta) {
 			tmp.schema = com.schema;
 			tmp.component = com.component;
 			tmp.connections = CLONE(com.connections);
+
+			if (com.outputs)
+				tmp.outputs = com.outputs;
+
+			if (com.inputs)
+				tmp.inputs = com.inputs;
+
 			var c = flow.meta.components[com.component];
 			if (c) {
 				tmp.meta = { type: c.type, icon: c.icon, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
@@ -1434,6 +1478,9 @@ function MAKEFLOWSTREAM(meta) {
 			item.y = instance.y;
 			item.note = instance.note;
 			item.config = instance.config;
+			item.outputs = instance.outputs;
+			item.inputs = instance.inputs;
+			flow.cleanforce();
 			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/redraw', id: instance.id, data: item });
 			save();
 		};
