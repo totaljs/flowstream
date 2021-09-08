@@ -989,43 +989,6 @@ function MAKEFLOWSTREAM(meta) {
 
 	var saveid;
 
-	flow.export = function() {
-
-		var self = this;
-		var output = {};
-
-		for (var key in self.meta.flow) {
-
-			var com = self.meta.flow[key];
-			if (key === 'paused') {
-				output[key] = CLONE(com);
-				continue;
-			}
-
-			var tmp = {};
-			tmp.x = com.x;
-			tmp.y = com.y;
-			tmp.stats = CLONE(com.stats);
-			tmp.connections = CLONE(com.connections);
-			tmp.id = com.id;
-			tmp.config = CLONE(com.config);
-			tmp.component = com.component;
-			tmp.connected = true;
-			tmp.note = com.note;
-			tmp.reference = com.reference;
-
-			if (com.outputs)
-				tmp.outputs = com.outputs;
-
-			if (com.inputs)
-				tmp.inputs = com.inputs;
-
-			output[tmp.id] = tmp;
-		}
-
-		return output;
-	};
-
 	flow.export2 = function() {
 		var variables = flow.variables;
 		var design = {};
