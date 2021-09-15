@@ -85,6 +85,7 @@ FS.init = function(id, next) {
 				opt.files = self.files;
 				opt.headers = self.headers;
 				opt.url = self.url;
+				opt.ip = self.ip;
 
 				instance.request(opt, function(err, meta) {
 
