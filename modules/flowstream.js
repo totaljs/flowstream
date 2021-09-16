@@ -41,15 +41,15 @@ var CALLBACKID = 0;
 	instance.pause(is);
 	instance.socket(socket);
 	instance.sendfs(flowstreamid, id, data);
-	instance.request(opt, callback);
 	instance.exec(opt, callback);
+	instance.httprequest(opt, callback);
 
 	Delegates:
 	instance.onsave(data);
 	instance.ondone();
 	instance.onerror(err, type);
 	instance.output(fid, data, tfsid, tid);
-	instance.onroute(url, remove);
+	instance.onhttproute(url, remove);
 	instance.ondestroy();
 
 	Extended Flow instances by:
@@ -62,15 +62,15 @@ var CALLBACKID = 0;
 */
 
 function Instance(instance, id) {
-	this.routes = {};
+	this.httproutes = {};
 	this.version = VERSION;
 	this.id = id;
 	this.flow = instance;
 }
 
-Instance.prototype.request = function(opt, callback) {
+Instance.prototype.httprequest = function(opt, callback) {
 
-	// opt.id {String} a URL address
+	// opt.route {String} a URL address
 	// opt.params {Object}
 	// opt.query {Object}
 	// opt.body {Object}
@@ -89,11 +89,151 @@ Instance.prototype.request = function(opt, callback) {
 		var callbackid = callback ? (CALLBACKID++) : -1;
 		if (callbackid !== -1)
 			CALLBACKS[callbackid] = { id: self.flow.id, callback: callback };
-		self.flow.postMessage({ TYPE: 'stream/request', data: opt, callbackid: callbackid });
+		self.flow.postMessage({ TYPE: 'stream/httprequest', data: opt, callbackid: callbackid });
 	} else
-		request(self.flow, opt, callback);
+		httprequest(self.flow, opt, callback);
 
 	return self;
+};
+
+// Can't be used in the FlowStream component
+Instance.prototype.httprouting = function() {
+
+	var instance = this;
+
+	instance.onhttproute = function(url, remove) {
+
+		// GET / #upload #5000 #10000
+		// - #flag means a flag name
+		// - first #number is timeout
+		// - second #number is max. limit for the payload
+
+		var flags = [];
+		var limit = 0;
+		var timeout = 0;
+		var id = url;
+
+		url = url.replace(/#[a-z0-9]+/g, function(text) {
+			text = text.substring(1);
+			if ((/^\d+$/).test(text)) {
+				if (timeout)
+					limit = +text;
+				else
+					timeout = +text;
+			} else
+				flags.push(text);
+			return '';
+		}).trim();
+
+		var route;
+
+		if (remove) {
+			route = instance.httproutes[id];
+			console.log('REMOVE', id, route);
+			if (route) {
+				route.remove();
+				delete instance.httproutes[id];
+			}
+			return;
+		}
+
+		if (instance.httproutes[id])
+			instance.httproutes[id].remove();
+
+		if (timeout)
+			flags.push(timeout);
+
+		route = ROUTE(url, function() {
+
+			var self = this;
+			var opt = {};
+
+			opt.route = id;
+			opt.params = self.params;
+			opt.query = self.query;
+			opt.body = self.body;
+			opt.files = self.files;
+			opt.headers = self.headers;
+			opt.url = self.url;
+			opt.ip = self.ip;
+			opt.cookies = {};
+
+			var cookie = self.headers.cookie;
+			if (cookie) {
+				var arr = cookie.split(';');
+				for (var i = 0; i < arr.length; i++) {
+					var line = arr[i].trim();
+					var index = line.indexOf('=');
+					if (index !== -1) {
+						try {
+							opt.cookies[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
+						} catch (e) {}
+					}
+				}
+			}
+
+			instance.httprequest(opt, function(meta) {
+
+				if (meta.status)
+					self.status = meta.status;
+
+				if (meta.headers) {
+					for (var key in meta.headers)
+						self.header(key, meta.headers[key]);
+				}
+
+				if (meta.cookies && meta.cookies instanceof Array) {
+					for (var item of meta.cookies) {
+						var name = item.name || item.id;
+						var value = item.value;
+						var expiration = item.expiration || item.expires || item.expire;
+						if (name && value && expiration)
+							self.res.cookie(name, value, expiration, item.options || item.config);
+					}
+				}
+
+				var data = meta.body || meta.data || meta.payload;
+				switch (meta.type) {
+					case 'error':
+						self.invalid(meta.body);
+						break;
+					case 'text':
+					case 'plain':
+						self.plain(data);
+						break;
+					case 'html':
+						self.content(data, 'text/html');
+						break;
+					case 'xml':
+						self.content(data, 'text/xml');
+						break;
+					case 'json':
+						self.json(data);
+						break;
+					case 'empty':
+						self.empty();
+						break;
+					default:
+						if (meta.filename) {
+							var stream = F.Fs.createReadStream(meta.filename);
+							self.stream(stream, meta.type, meta.download);
+							meta.remove && CLEANUP(stream, () => F.Fs.unlink(meta.filename, NOOP));
+						} else {
+							if (typeof(data) === 'string')
+								self.binary(Buffer.from(data, 'base64'), meta.type);
+							else
+								self.json(data);
+						}
+						break;
+				}
+
+			}, flags, limit);
+		});
+
+		instance.httproutes[id] = route;
+	};
+
+	return instance;
 };
 
 Instance.prototype.exec = function(opt, callback) {
@@ -198,6 +338,11 @@ Instance.prototype.destroy = function() {
 	for (var key in CALLBACKS) {
 		if (CALLBACKS[key].id === self.id)
 			delete CALLBACKS[key];
+	}
+
+	if (self.httproutes) {
+		for (var key in self.httproutes)
+			self.httproutes[key].remove();
 	}
 
 	self.ondestroy && self.ondestroy();
@@ -526,22 +671,22 @@ function exec(self, opt) {
 	}
 }
 
-function request(self, opt, callback) {
-	if (self.routes[opt.id]) {
-		self.routes[opt.id].callback(opt, function(err, data) {
+function httprequest(self, opt, callback) {
+	if (self.httproutes[opt.route]) {
+		self.httproutes[opt.route].callback(opt, function(data) {
 			// data.status {Number}
 			// data.headers {Object}
 			// data.body {Buffer}
 			if (Parent)
-				Parent.postMessage({ TYPE: 'stream/response', error: err, data: data, callbackid: callback });
+				Parent.postMessage({ TYPE: 'stream/httpresponse', data: data, callbackid: callback });
 			else
-				callback(err, data);
+				callback(data);
 		});
 	} else {
 		if (Parent)
-			Parent.postMessage({ TYPE: 'stream/response', error: 404, callbackid: callback });
+			Parent.postMessage({ TYPE: 'stream/httpresponse', data: { type: 'error', body: 404 }, callbackid: callback });
 		else
-			callback(404);
+			callback({ type: 'error', body: 404 });
 	}
 }
 
@@ -572,8 +717,8 @@ function init_current(meta, callback) {
 					flow.reconfigure(msg.id, msg.data);
 					break;
 
-				case 'stream/request':
-					request(flow, msg.data, msg.callbackid);
+				case 'stream/httprequest':
+					httprequest(flow, msg.data, msg.callbackid);
 					break;
 
 				case 'stream/exec':
@@ -715,13 +860,13 @@ function init_current(meta, callback) {
 				Parent.postMessage({ TYPE: 'stream/save', data: data });
 		};
 
-		flow.proxy.route = function(url, callback, instance) {
+		flow.proxy.httproute = function(url, callback, instance) {
 			if (!flow.$schema || !flow.$schema.readonly) {
 				if (callback)
-					flow.routes[url] = { id: instance.id, component: instance.component, callback: callback };
+					flow.httproutes[url] = { id: instance.id, component: instance.component, callback: callback };
 				else
-					delete flow.routes[url];
-				Parent.postMessage({ TYPE: 'stream/route', data: { url: url, remove: callback == null }});
+					delete flow.httproutes[url];
+				Parent.postMessage({ TYPE: 'stream/httproute', data: { url: url, remove: callback == null }});
 			}
 		};
 
@@ -775,13 +920,13 @@ function init_current(meta, callback) {
 				flow.$instance.onsave && flow.$instance.onsave(data);
 		};
 
-		flow.proxy.route = function(url, callback, instanceid) {
+		flow.proxy.httproute = function(url, callback, instanceid) {
 			if (!flow.$schema || !flow.$schema.readonly) {
 				if (callback)
-					flow.routes[url] = { id: instanceid, callback: callback };
+					flow.httproutes[url] = { id: instanceid, callback: callback };
 				else
-					delete flow.routes[url];
-				flow.$instance.onroute && flow.$instance.onroute(url, callback == null);
+					delete flow.httproutes[url];
+				flow.$instance.onhttproute && flow.$instance.onhttproute(url, callback == null);
 			}
 		};
 
@@ -863,11 +1008,11 @@ function init_worker(meta, type, callback) {
 				}
 				break;
 
-			case 'stream/response':
+			case 'stream/httpresponse':
 				var cb = CALLBACKS[msg.callbackid];
 				if (cb) {
 					delete CALLBACKS[msg.callbackid];
-					cb.callback(msg.error, msg.data, msg.meta);
+					cb.callback(msg.data, msg.meta);
 				}
 				break;
 
@@ -897,8 +1042,8 @@ function init_worker(meta, type, callback) {
 				worker.$instance.onsave && worker.$instance.onsave(msg.data);
 				break;
 
-			case 'stream/route':
-				worker.$instance.onroute && worker.$instance.onroute(msg.data.url, msg.data.remove);
+			case 'stream/httproute':
+				worker.$instance.onhttproute && worker.$instance.onhttproute(msg.data.url, msg.data.remove);
 				break;
 
 			case 'stream/done':
@@ -1004,7 +1149,6 @@ exports.io = function(flowstreamid, id, callback) {
 	var arr = [];
 
 	Object.keys(FLOWS).wait(function(key, next) {
-
 		var flow = FLOWS[key];
 		if (flow) {
 			flow.$instance.io(null, function(err, data) {
@@ -1016,7 +1160,6 @@ exports.io = function(flowstreamid, id, callback) {
 			});
 		} else
 			next();
-
 	}, function() {
 		callback(null, arr);
 	});
@@ -1446,7 +1589,7 @@ function MAKEFLOWSTREAM(meta) {
 	flow.variables2 = meta.variables2;
 	flow.sockets = {};
 	flow.$schema = meta;
-	flow.routes = {};
+	flow.httproutes = {};
 
 	if (meta.paused)
 		flow.pause(true);
@@ -1546,10 +1689,10 @@ function MAKEFLOWSTREAM(meta) {
 	};
 
 	flow.onunregister = function(component) {
-		for (var key in flow.routes) {
-			var route = flow.routes[key];
+		for (var key in flow.httproutes) {
+			var route = flow.httproutes[key];
 			if (route && route.component === component.id)
-				flow.proxy.route(key, null);
+				flow.proxy.httproute(key, null);
 		}
 	};
 
@@ -1567,22 +1710,22 @@ function MAKEFLOWSTREAM(meta) {
 		}
 	};
 
-	flow.route = function(url, callback) {
-		flow.proxy.route(url, callback);
+	flow.httproute = function(url, callback) {
+		flow.proxy.httproute(url, callback);
 	};
 
 	flow.ondisconnect = function(instance) {
-		for (var key in flow.routes) {
-			var route = flow.routes[key];
+		for (var key in flow.httproutes) {
+			var route = flow.httproutes[key];
 			if (route && route.id === instance.id)
-				flow.proxy.route(key, null);
+				flow.proxy.httproute(key, null);
 		}
 	};
 
 	flow.onconnect = function(instance) {
 
-		instance.route = function(url, callback) {
-			flow.proxy.route(url, callback, instance);
+		instance.httproute = function(url, callback) {
+			flow.proxy.httproute(url, callback, instance);
 		};
 
 		instance.save = function() {
