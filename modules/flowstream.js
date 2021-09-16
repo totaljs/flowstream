@@ -129,7 +129,6 @@ Instance.prototype.httprouting = function() {
 
 		if (remove) {
 			route = instance.httproutes[id];
-			console.log('REMOVE', id, route);
 			if (route) {
 				route.remove();
 				delete instance.httproutes[id];
@@ -1630,6 +1629,7 @@ function MAKEFLOWSTREAM(meta) {
 				obj.group = com.group;
 				obj.version = com.version;
 				obj.author = com.author;
+				obj.permissions = com.permissions;
 				arr.push(obj);
 			} else
 				arr.push(com);
@@ -1763,13 +1763,13 @@ function MAKEFLOWSTREAM(meta) {
 
 		instance.reconfigure = function(config) {
 			instance.main.reconfigure(instance.id, config);
-			save();
 		};
 	};
 
 	flow.onreconfigure = function(instance) {
 		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/config', id: instance.id, data: instance.config });
 		flow.proxy.refresh('configure');
+		save();
 	};
 
 	flow.onerror = function(err) {
@@ -1835,6 +1835,7 @@ function MAKEFLOWSTREAM(meta) {
 	});
 
 	flow.proxy.newclient = function(clientid) {
+
 		if (flow.proxy.online) {
 			flow.proxy.send({ TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, total: F.version }, 1, clientid);
 			flow.proxy.send({ TYPE: 'flow/variables', data: flow.variables }, 1, clientid);
