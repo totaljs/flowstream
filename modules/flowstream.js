@@ -1273,7 +1273,13 @@ function MAKEFLOWSTREAM(meta) {
 		}
 
 		for (var key in flow.meta.flow) {
+
 			var com = flow.meta.flow[key];
+			if (key === 'paused') {
+				design[key] = com;
+				continue;
+			}
+
 			var tmp = {};
 			tmp.id = key;
 			tmp.config = CLONE(com.config);
