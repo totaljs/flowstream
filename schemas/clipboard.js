@@ -12,6 +12,7 @@ NEWSCHEMA('Clipboard', function(schema) {
 	});
 
 	schema.addWorkflow('import', function($, model) {
+
 		var data = model.data.parseJSON(true);
 
 		if (!data) {

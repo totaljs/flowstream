@@ -17,6 +17,7 @@ FS.save = function() {
 };
 
 FS.save_force = function() {
+
 	saveid = null;
 
 	for (var key in FS.db) {
@@ -40,13 +41,17 @@ FS.init = function(id, next) {
 	flow.variables2 = FS.db.variables || {};
 
 	MODULE('flowstream').init(flow, CONF.flowstream_worker, function(err, instance) {
+
+		instance.httprouting();
 		instance.ondone = () => next();
 		instance.onerror = (err, type) => console.log('FlowError', err, type);
+
 		instance.onsave = function(data) {
 			delete flow.variables2;
 			FS.db[id] = data;
 			FS.save();
 		};
+
 		FS.instances[id] = instance;
 	});
 

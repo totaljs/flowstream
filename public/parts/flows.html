@@ -8,7 +8,7 @@
 		</div>
 		<div>
 			<button title="@(Variables)" class="exec" data-exec="common/variables"><i class="fa fa-clipboard-list"></i></button>
-			<a href="https://docs.totaljs.com/" title="@(Documentation: Total.js Platform)" target="_blank" class="special"><i class="fa fa-book"></i></a>
+			<a href="https://docs.totaljs.com/flowstream/" title="@(Documentation: Total.js FlowStream)" target="_blank" class="special"><i class="fa fa-book"></i></a>
 		</div>
 	</header>
 	<div class="header-empty"></div>
@@ -165,6 +165,10 @@
 			}
 
 			opt.items.push('-');
+
+			if (top === W)
+				opt.items.push({ id: 'newtab', name: '@(Open in new tab)', icon: 'far fa-window-restore' });
+
 			opt.items.push({ id: 'edit', name: '@(Edit)', icon: 'fa fa-pencil' });
 			opt.items.push({ id: 'clone', name: '@(Clone)', icon: 'far fa-clone' });
 			opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
@@ -174,6 +178,10 @@
 
 			opt.callback = function(opt) {
 				switch (opt.id) {
+					case 'newtab':
+						var url = location.origin.replace(/^http/, 'ws') + '/flows/{0}/'.format(id);
+						W.open(location.protocol + '//' + common.designer + '/?darkmode={0}&socket={1}&components={2}'.format($('body').hclass('ui-dark') ? '1' : '0', encodeURIComponent(url), encodeURIComponent(common.components || '')));
+						break;
 					case 'pause':
 					case 'play':
 						DAPI(QUERIFY('streams_pause/' + id, { is: paused ? 0 : 1 }), function() {
