@@ -694,6 +694,7 @@ function init_current(meta, callback) {
 	var flow = MAKEFLOWSTREAM(meta);
 	FLOWS[meta.id] = flow;
 
+	flow.origin = meta.origin;
 	flow.proxy.online = false;
 	flow.$instance = new Instance(flow, meta.id);
 
@@ -1320,6 +1321,7 @@ function MAKEFLOWSTREAM(meta) {
 		data.design = design;
 		data.variables = variables;
 		data.sources = sources;
+		data.origin = meta.origin;
 		data.dtcreated = meta.dtcreated;
 		data.dtupdated = new Date();
 		return data;
@@ -1442,6 +1444,14 @@ function MAKEFLOWSTREAM(meta) {
 				if (flow.proxy.online) {
 					msg.data = flow.export2();
 					flow.proxy.send(msg);
+				}
+				break;
+
+			case 'origin':
+				var origin = msg.body || '';
+				if (meta.origin !== origin) {
+					flow.origin = meta.origin = origin;
+					save();
 				}
 				break;
 
@@ -1843,7 +1853,7 @@ function MAKEFLOWSTREAM(meta) {
 	flow.proxy.newclient = function(clientid) {
 
 		if (flow.proxy.online) {
-			flow.proxy.send({ TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, total: F.version, name: meta.name, version2: meta.version, icon: meta.icon, reference: meta.reference, author: meta.author, color: meta.color }, 1, clientid);
+			flow.proxy.send({ TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, total: F.version, name: meta.name, version2: meta.version, icon: meta.icon, reference: meta.reference, author: meta.author, color: meta.color, origin: meta.origin }, 1, clientid);
 			flow.proxy.send({ TYPE: 'flow/variables', data: flow.variables }, 1, clientid);
 			flow.proxy.send({ TYPE: 'flow/variables2', data: flow.variables2 }, 1, clientid);
 			flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) }, 1, clientid);
