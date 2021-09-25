@@ -582,6 +582,14 @@ exports.exec = function(id, opt) {
 		opt.callback(404);
 };
 
+exports.eval = function(id, opt) {
+	var fs = FLOWS[id];
+	if (fs)
+		fs.eval(id, opt);
+	else if (opt.callback)
+		opt.callback(404);
+};
+
 exports.input = function(ffsid, fid, tfsid, tid, data) {
 	if (tfsid) {
 		var fs = FLOWS[tfsid];
