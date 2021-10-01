@@ -1315,7 +1315,8 @@ function MAKEFLOWSTREAM(meta) {
 		for (var key in flow.meta.flow) {
 
 			var com = flow.meta.flow[key];
-			if (key === 'paused') {
+
+			if (key === 'paused' || key === 'groups') {
 				design[key] = com;
 				continue;
 			}
@@ -1480,6 +1481,14 @@ function MAKEFLOWSTREAM(meta) {
 					callback && callback(msg);
 					save();
 				}
+				break;
+
+			case 'groups':
+				flow.meta.flow.groups = msg.data;
+				msg.TYPE = 'flow/groups';
+				flow.proxy.online && flow.proxy.send(msg, 2, clientid);
+				callback && callback(msg);
+				save();
 				break;
 
 			case 'export':
