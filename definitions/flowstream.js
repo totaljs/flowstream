@@ -29,10 +29,10 @@ FS.save_force = function() {
 
 	if (CONF.backup) {
 		PATH.fs.rename(PATH.join(DIRECTORY, DB_FILE), PATH.join(DIRECTORY, DB_FILE.replace(/\.json/, '') + '_' + (new Date()).format('yyyyMMddHHmm') + '.bk'), function() {
-			PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db), ERROR('FlowStream.save'));
+			PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db, null, '\t'), ERROR('FlowStream.save'));
 		});
 	} else
-		PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db), ERROR('FlowStream.save'));
+		PATH.fs.writeFile(PATH.join(DIRECTORY, DB_FILE), JSON.stringify(FS.db, null, '\t'), ERROR('FlowStream.save'));
 };
 
 FS.init = function(id, next) {
