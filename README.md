@@ -1,4 +1,4 @@
-# Total.js FlowStream (BETA)
+# Total.js FlowStream
 
 - [Website](https://www.totaljs.com/flowstream/)
 - [__Documentation__](https://docs.totaljs.com/total4/5aed1001bj51c/)
@@ -14,5 +14,12 @@ Total.js FlowStream is a new alternative to the Total.js Flow that integrates th
 __Requirements__:
 
 - Total.js 4 - `$ npm install total4`
+
+__Docker__:
+
+```bash
+docker pull totalplatform/flowstream:latest
+docker run -p 8000:8000 totalplatform/flowstream:latest
+````
 
 ![FlowStream](https://cdn.totaljs.com/images/flowstream.png)
