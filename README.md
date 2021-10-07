@@ -18,8 +18,8 @@ __Requirements__:
 __Docker__:
 
 ```bash
-docker pull totalplatform/flowstream:latest
-docker run -p 8000:8000 totalplatform/flowstream:latest
+docker pull totalplatform/flowstream
+docker run -p 8000:8000 totalplatform/flowstream
 ````
 
 ![FlowStream](https://cdn.totaljs.com/images/flowstream.png)
