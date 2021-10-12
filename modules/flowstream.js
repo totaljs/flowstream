@@ -458,9 +458,14 @@ function readmeta(meta) {
 
 function readinstance(flow, id) {
 	var tmp = flow.meta.flow[id];
-	var com = flow.meta.components[tmp.component];
-	if (com.type === 'output' || com.type === 'input' || com.type === 'config')
-		return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, type: com.type, readme: tmp.config.readme, outputs: tmp.outputs, inputs: tmp.inputs };
+	if (tmp) {
+		var com = flow.meta.components[tmp.component];
+		if (com) {
+			if ((com.type === 'output' || com.type === 'input' || com.type === 'config'))
+				return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, type: com.type, readme: tmp.config.readme, outputs: tmp.outputs, inputs: tmp.inputs };
+		} else
+			flow.clean();
+	}
 }
 
 // Reads all inputs, outputs, publish, subscribe instances
