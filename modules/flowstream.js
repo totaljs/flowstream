@@ -912,8 +912,19 @@ function init_current(meta, callback) {
 			Parent.postMessage({ TYPE: 'stream/done', error: err });
 		};
 
-		flow.proxy.error = function(err, type) {
-			Parent.postMessage({ TYPE: 'stream/error', error: err, type: type });
+		flow.proxy.error = function(err, source, instance) {
+
+			var instanceid = '';
+
+			if (instance) {
+				if (source === 'instance_message')
+					instanceid = instance.instance.id;
+				else if (source === 'instance_close')
+					instanceid = instance.id;
+			}
+
+			instanceid && flow.onerror(err, source, instanceid);
+			Parent.postMessage({ TYPE: 'stream/error', error: err, source: source, id: instanceid });
 		};
 
 		flow.proxy.refresh = function(type) {
@@ -984,8 +995,19 @@ function init_current(meta, callback) {
 			exports.input(flow.id, fromid, tfsid, toid, data);
 		};
 
-		flow.proxy.error = function(err, type) {
-			flow.$instance.onerror && flow.$instance.onerror(err, type);
+		flow.proxy.error = function(err, source, instance) {
+
+			var instanceid = '';
+
+			if (instance) {
+				if (source === 'instance_message')
+					instanceid = instance.instance.id;
+				else if (source === 'instance_close')
+					instanceid = instance.id;
+			}
+
+			instanceid && flow.onerror(err, source, instanceid);
+			flow.$instance.onerror && flow.$instance.onerror(err, source, instanceid);
 		};
 
 		flow.proxy.output = function(id, data, flowstreamid, instanceid) {
@@ -1072,8 +1094,8 @@ function init_worker(meta, type, callback) {
 				break;
 
 			case 'stream/error':
-				worker.socket && worker.$socket.send({ TYPE: 'flow/error', error: msg.error, type: msg.type });
-				worker.$instance.onerror && worker.$instance.onerror(msg.error, msg.type);
+				worker.socket && worker.$socket.send({ TYPE: 'flow/error', error: msg.error, type: msg.type, id: msg.id });
+				worker.$instance.onerror && worker.$instance.onerror(msg.error, msg.type, msg.id);
 				break;
 
 			case 'stream/save':
@@ -1855,21 +1877,22 @@ function MAKEFLOWSTREAM(meta) {
 		save();
 	};
 
-	flow.onerror = function(err) {
+	flow.onerror = function(err, source, instanceid) {
 
 		err += '';
 
 		var obj = {};
 		obj.error = err;
-		obj.id = this.id;
+		obj.id = instanceid || this.id;
 		obj.ts = new Date();
+		obj.source = source;
 
 		flow.errors.unshift(obj);
 
 		if (flow.errors.length > 10)
 			flow.errors.pop();
 
-		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/error', error: err, id: this.id, ts: obj.ts });
+		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/error', error: err, id: obj.id, ts: obj.ts, source: source });
 	};
 
 	// component.status() will execute this method

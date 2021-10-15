@@ -44,7 +44,7 @@ FS.init = function(id, next) {
 
 		instance.httprouting();
 		instance.ondone = () => next();
-		instance.onerror = (err, type) => console.log('FlowError', err, type);
+		instance.onerror = (err, source, id) => console.log('FlowError', err, '---->', source, id);
 
 		instance.onsave = function(data) {
 			delete flow.variables2;
