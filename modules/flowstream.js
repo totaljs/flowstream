@@ -7,7 +7,7 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 6;
+const VERSION = 7;
 
 var Parent = W.parentPort;
 var CALLBACKS = {};
@@ -530,12 +530,19 @@ Instance.prototype.variables = function(variables) {
 	return self;
 };
 
-Instance.prototype.refresh = function(id, type) {
+Instance.prototype.refresh = function(id, type, data) {
 	var self = this;
 	var flow = self.flow;
 	if (flow.isworkerthread) {
-		flow.postMessage({ TYPE: 'stream/refresh', id: id, type: type });
+		flow.postMessage({ TYPE: 'stream/refresh', id: id, type: type, data: data });
 	} else {
+
+		if (type === 'meta' && data) {
+			for (var key in data)
+				flow.$schema[key] = data[key];
+			flow.proxy.refreshmeta();
+		}
+
 		for (var key in flow.meta.flow) {
 			var instance = flow.meta.flow[key];
 			instance.flowstream && instance.flowstream(id, type);
@@ -775,6 +782,13 @@ function init_current(meta, callback) {
 					break;
 
 				case 'stream/refresh':
+
+					if (msg.type === 'meta' && msg.data) {
+						for (var key in msg.data)
+							flow.$schema[key] = msg.data[key];
+						flow.proxy.refreshmeta();
+					}
+
 					for (var key in flow.meta.flow) {
 						var instance = flow.meta.flow[key];
 						instance.flowstream && instance.flowstream(msg.id, msg.type);
@@ -1323,6 +1337,8 @@ function MAKEFLOWSTREAM(meta) {
 
 	var saveid;
 
+	flow.metadata = meta;
+
 	flow.export2 = function() {
 		var variables = flow.variables;
 		var design = {};
@@ -1374,22 +1390,22 @@ function MAKEFLOWSTREAM(meta) {
 
 		var data = {};
 		data.paused = flow.paused;
-		data.id = meta.id;
-		data.reference = meta.reference;
-		data.author = meta.author;
-		data.group = meta.group;
-		data.icon = meta.icon;
-		data.color = meta.color;
-		data.version = meta.version;
-		data.readme = meta.readme;
-		data.url = meta.url;
-		data.name = meta.name;
+		data.id = flow.$schema.id;
+		data.reference = flow.$schema.reference;
+		data.author = flow.$schema.author;
+		data.group = flow.$schema.group;
+		data.icon = flow.$schema.icon;
+		data.color = flow.$schema.color;
+		data.version = flow.$schema.version;
+		data.readme = flow.$schema.readme;
+		data.url = flow.$schema.url;
+		data.name = flow.$schema.name;
 		data.components = components;
 		data.design = design;
 		data.variables = variables;
 		data.sources = sources;
-		data.origin = meta.origin;
-		data.dtcreated = meta.dtcreated;
+		data.origin = flow.$schema.origin;
+		data.dtcreated = flow.$schema.dtcreated;
 		data.dtupdated = new Date();
 		return data;
 	};
@@ -1529,8 +1545,8 @@ function MAKEFLOWSTREAM(meta) {
 
 			case 'origin':
 				var origin = msg.body || '';
-				if (meta.origin !== origin) {
-					flow.origin = meta.origin = origin;
+				if (flow.$schema.origin !== origin) {
+					flow.origin = flow.$schema.origin = origin;
 					save();
 				}
 				break;
@@ -1945,21 +1961,30 @@ function MAKEFLOWSTREAM(meta) {
 		}
 	});
 
-	flow.proxy.newclient = function(clientid) {
+	var makemeta = function() {
+		return { TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, total: F.version, name: flow.$schema.name, version2: flow.$schema.version, icon: flow.$schema.icon, reference: flow.$schema.reference, author: flow.$schema.author, color: flow.$schema.color, origin: flow.$schema.origin };
+	};
 
+	flow.proxy.refreshmeta = function() {
+		flow.proxy.send(makemeta(), 0);
+	};
+
+	flow.proxy.newclient = function(clientid, metaonly) {
 		if (flow.proxy.online) {
-			flow.proxy.send({ TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, total: F.version, name: meta.name, version2: meta.version, icon: meta.icon, reference: meta.reference, author: meta.author, color: meta.color, origin: meta.origin }, 1, clientid);
-			flow.proxy.send({ TYPE: 'flow/variables', data: flow.variables }, 1, clientid);
-			flow.proxy.send({ TYPE: 'flow/variables2', data: flow.variables2 }, 1, clientid);
-			flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) }, 1, clientid);
-			flow.proxy.send({ TYPE: 'flow/design', data: flow.export() }, 1, clientid);
-			flow.proxy.send({ TYPE: 'flow/errors', data: flow.errors }, 1, clientid);
-			setTimeout(function() {
-				flow.instances().wait(function(com, next) {
-					com.status();
-					setImmediate(next);
-				}, 3);
-			}, 1500);
+			flow.proxy.send(makemeta(), 1, clientid);
+			if (!metaonly) {
+				flow.proxy.send({ TYPE: 'flow/variables', data: flow.variables }, 1, clientid);
+				flow.proxy.send({ TYPE: 'flow/variables2', data: flow.variables2 }, 1, clientid);
+				flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) }, 1, clientid);
+				flow.proxy.send({ TYPE: 'flow/design', data: flow.export() }, 1, clientid);
+				flow.proxy.send({ TYPE: 'flow/errors', data: flow.errors }, 1, clientid);
+				setTimeout(function() {
+					flow.instances().wait(function(com, next) {
+						com.status();
+						setImmediate(next);
+					}, 3);
+				}, 1500);
+			}
 		}
 	};
 

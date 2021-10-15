@@ -61,7 +61,8 @@ NEWSCHEMA('Streams', function(schema) {
 				item.group = model.group;
 				item.color = model.color;
 				item.readme = model.readme;
-				// MAIN.flowstream.refresh(model.id, 'meta');
+				var instance = MAIN.flowstream.instances[model.id];
+				instance && instance.refresh(model.id, 'meta', CLONE(model));
 			} else {
 				$.invalid(404);
 				return;
@@ -69,7 +70,7 @@ NEWSCHEMA('Streams', function(schema) {
 		}
 
 		MAIN.flowstream.save();
-		AUDIT($);
+		$.audit();
 		$.success();
 	});
 
@@ -80,7 +81,7 @@ NEWSCHEMA('Streams', function(schema) {
 			delete MAIN.flowstream.db[id];
 			MAIN.flowstream.instances[id].destroy();
 			MAIN.flowstream.save();
-			AUDIT($);
+			$.audit();
 			$.success();
 		} else
 			$.invalid(404);
@@ -125,6 +126,7 @@ NEWSCHEMA('Streams', function(schema) {
 				instance.flow.stats.paused = is;
 
 			instance.pause(is);
+			$.audit();
 			$.success();
 		} else
 			$.invalid(404);
