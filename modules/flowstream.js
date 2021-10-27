@@ -7,7 +7,7 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 7;
+const VERSION = 8;
 
 var Parent = W.parentPort;
 var CALLBACKS = {};
@@ -1550,6 +1550,11 @@ function MAKEFLOWSTREAM(meta) {
 					flow.origin = flow.$schema.origin = origin;
 					save();
 				}
+				break;
+
+			case 'reset_stats':
+				flow.stats.messages = 0;
+				flow.stats.pending = 0;
 				break;
 
 			case 'save':
