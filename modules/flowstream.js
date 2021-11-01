@@ -1341,6 +1341,7 @@ function MAKEFLOWSTREAM(meta) {
 	flow.metadata = meta;
 
 	flow.export2 = function() {
+
 		var variables = flow.variables;
 		var design = {};
 		var components = {};
@@ -1375,6 +1376,7 @@ function MAKEFLOWSTREAM(meta) {
 			tmp.schema = com.schema;
 			tmp.component = com.component;
 			tmp.connections = CLONE(com.connections);
+			tmp.tab = com.tab;
 
 			if (com.outputs)
 				tmp.outputs = com.outputs;
