@@ -1067,6 +1067,7 @@ function init_worker(meta, type, callback) {
 
 	var restart = function(code) {
 		setTimeout(function(worker, code) {
+			worker.$socket && setTimeout(socket => socket && socket.destroy(), 2000, worker.$socket);
 			if (!worker.$destroyed) {
 				console.log('FlowStream auto-restart: ' + worker.$schema.name + ' (exit code: ' + ((code || '0') + '') + ')');
 				init_worker(worker.$schema, type, callback);
