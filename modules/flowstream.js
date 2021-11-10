@@ -1587,6 +1587,7 @@ function MAKEFLOWSTREAM(meta) {
 				});
 				msg.TYPE = 'flow/design_insert';
 				break;
+
 			case 'remove':
 				flow.remove(msg.data, function(err) {
 					msg.error = err ? err.toString() : null;
