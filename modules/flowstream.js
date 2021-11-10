@@ -7,7 +7,7 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 9;
+const VERSION = 10;
 
 var Parent = W.parentPort;
 var CALLBACKS = {};
@@ -1576,6 +1576,25 @@ function MAKEFLOWSTREAM(meta) {
 					save();
 				});
 				msg.TYPE = 'flow/design';
+				break;
+
+			case 'insert':
+				flow.insert(CLONE(msg.data), function(err) {
+					msg.error = err ? err.toString() : null;
+					flow.proxy.online && flow.proxy.send(msg);
+					callback && callback(msg);
+					save();
+				});
+				msg.TYPE = 'flow/design_insert';
+				break;
+			case 'remove':
+				flow.remove(msg.data, function(err) {
+					msg.error = err ? err.toString() : null;
+					flow.proxy.online && flow.proxy.send(msg);
+					callback && callback(msg);
+					save();
+				});
+				msg.TYPE = 'flow/design_remove';
 				break;
 
 			case 'variables':
