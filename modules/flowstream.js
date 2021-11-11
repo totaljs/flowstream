@@ -1349,34 +1349,16 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.metadata = meta;
 
-	flow.export2 = function() {
+	flow.export_instance = function(id) {
 
-		var variables = flow.variables;
-		var design = {};
-		var components = {};
-		var sources = {};
+		var com = flow.meta.flow[id];
+		if (com) {
 
-		for (var key in flow.sources) {
-			var com = flow.sources[key];
-			sources[key] = com;
-		}
-
-		for (var key in flow.meta.components) {
-			var com = flow.meta.components[key];
-			components[key] = com.ui.raw;
-		}
-
-		for (var key in flow.meta.flow) {
-
-			var com = flow.meta.flow[key];
-
-			if (key === 'paused' || key === 'groups' || key === 'tabs') {
-				design[key] = com;
-				continue;
-			}
+			if (id === 'paused' || id === 'groups' || id === 'tabs')
+				return CLONE(com);
 
 			var tmp = {};
-			tmp.id = key;
+			tmp.id = id;
 			tmp.config = CLONE(com.config);
 			tmp.x = com.x;
 			tmp.y = com.y;
@@ -1396,9 +1378,30 @@ function MAKEFLOWSTREAM(meta) {
 			var c = flow.meta.components[com.component];
 			if (c) {
 				tmp.meta = { type: c.type, icon: c.icon, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
-				design[key] = tmp;
+				return tmp;
 			}
 		}
+	};
+
+	flow.export2 = function() {
+
+		var variables = flow.variables;
+		var design = {};
+		var components = {};
+		var sources = {};
+
+		for (var key in flow.sources) {
+			var com = flow.sources[key];
+			sources[key] = com;
+		}
+
+		for (var key in flow.meta.components) {
+			var com = flow.meta.components[key];
+			components[key] = com.ui.raw;
+		}
+
+		for (var key in flow.meta.flow)
+			design[key] = flow.export_instance(key);
 
 		var data = {};
 		data.paused = flow.paused;
@@ -1580,6 +1583,8 @@ function MAKEFLOWSTREAM(meta) {
 
 			case 'insert':
 				flow.insert(CLONE(msg.data), function(err) {
+					for (var key in msg.data)
+						msg.data[key] = flow.export_instance(key);
 					msg.error = err ? err.toString() : null;
 					flow.proxy.online && flow.proxy.send(msg);
 					callback && callback(msg);
