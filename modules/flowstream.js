@@ -1421,7 +1421,6 @@ function MAKEFLOWSTREAM(meta) {
 		data.sources = sources;
 		data.origin = flow.$schema.origin;
 		data.dtcreated = flow.$schema.dtcreated;
-		data.dtupdated = new Date();
 		return data;
 	};
 
