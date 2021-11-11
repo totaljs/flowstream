@@ -1349,7 +1349,7 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.metadata = meta;
 
-	flow.export_instance = function(id) {
+	flow.export_instance2 = function(id) {
 
 		var com = flow.meta.flow[id];
 		if (com) {
@@ -1401,7 +1401,7 @@ function MAKEFLOWSTREAM(meta) {
 		}
 
 		for (var key in flow.meta.flow)
-			design[key] = flow.export_instance(key);
+			design[key] = flow.export_instance2(key);
 
 		var data = {};
 		data.paused = flow.paused;
@@ -1583,7 +1583,7 @@ function MAKEFLOWSTREAM(meta) {
 			case 'insert':
 				flow.insert(CLONE(msg.data), function(err) {
 					for (var key in msg.data)
-						msg.data[key] = flow.export_instance(key);
+						msg.data[key] = flow.export_instance2(key);
 					msg.error = err ? err.toString() : null;
 					flow.proxy.online && flow.proxy.send(msg);
 					callback && callback(msg);
