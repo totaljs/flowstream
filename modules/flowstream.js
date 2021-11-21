@@ -7,7 +7,7 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 10;
+const VERSION = 11;
 
 var Parent = W.parentPort;
 var CALLBACKS = {};
@@ -1362,6 +1362,9 @@ function MAKEFLOWSTREAM(meta) {
 			tmp.config = CLONE(com.config);
 			tmp.x = com.x;
 			tmp.y = com.y;
+			tmp.offset = com.offset;
+			tmp.size = com.size;
+			tmp.meta = com.meta;
 			tmp.schemaid = com.schemaid;
 			tmp.note = com.note;
 			tmp.schema = com.schema;
@@ -1377,7 +1380,7 @@ function MAKEFLOWSTREAM(meta) {
 
 			var c = flow.meta.components[com.component];
 			if (c) {
-				tmp.meta = { type: c.type, icon: c.icon, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
+				tmp.template = { type: c.type, icon: c.icon, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
 				return tmp;
 			}
 		}
@@ -1487,10 +1490,11 @@ function MAKEFLOWSTREAM(meta) {
 				break;
 
 			case 'note':
+			case 'meta':
 				var instance = flow.meta.flow[msg.id];
 				if (instance) {
-					instance.note = msg.data;
-					msg.TYPE = 'flow/note';
+					instance[msg.TYPE] = msg.data;
+					msg.TYPE = 'flow/' + msg.TYPE;
 					flow.proxy.online && flow.proxy.send(msg, 0, clientid);
 					callback && callback(msg);
 					save();
@@ -1757,9 +1761,11 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.load(meta.components, meta.design, function() {
 
-		Object.keys(flow.sources).wait(function(key, next) {
-			TMS.connect(flow, key, next);
-		});
+		if (flow.sources) {
+			Object.keys(flow.sources).wait(function(key, next) {
+				TMS.connect(flow, key, next);
+			});
+		}
 
 		flow.ready = true;
 		setImmediate(() => flow.proxy.done());
@@ -1775,6 +1781,7 @@ function MAKEFLOWSTREAM(meta) {
 			if (prepare_export) {
 				var obj = {};
 				obj.id = com.id;
+				obj.meta = com.meta;
 				obj.name = com.name;
 				obj.type = com.type;
 				obj.css = com.ui.css;
@@ -1894,6 +1901,9 @@ function MAKEFLOWSTREAM(meta) {
 			var item = {};
 			item.x = instance.x;
 			item.y = instance.y;
+			item.size = instance.size;
+			item.offset = instance.offset;
+			item.meta = instance.meta;
 			item.note = instance.note;
 			item.config = instance.config;
 			item.outputs = instance.outputs;

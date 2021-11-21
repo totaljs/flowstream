@@ -17,7 +17,6 @@ FS.save = function() {
 };
 
 FS.save_force = function() {
-
 	saveid = null;
 
 	for (var key in FS.db) {
@@ -38,10 +37,10 @@ FS.save_force = function() {
 FS.init = function(id, next) {
 
 	var flow = FS.db[id];
+
 	flow.variables2 = FS.db.variables || {};
 
 	MODULE('flowstream').init(flow, CONF.flowstream_worker, function(err, instance) {
-
 		instance.httprouting();
 		instance.ondone = () => next();
 		instance.onerror = function(err, source, id, component) {
@@ -53,17 +52,23 @@ FS.init = function(id, next) {
 			output += '| Instance ID: ' + (id || empty) + '\n';
 			output += '| Component ID: ' + (component || empty);
 			console.error(output);
+			var meta = {};
+			meta.error = err;
+			meta.source = source;
+			meta.id = id;
+			meta.component = component;
+			EMIT('flowstream_error', meta);
 		};
 
 		instance.onsave = function(data) {
 			delete flow.variables2;
+			EMIT('flowstream_save', data);
 			FS.db[id] = data;
 			FS.save();
 		};
 
 		FS.instances[id] = instance;
 	});
-
 };
 
 ON('ready', function() {
@@ -71,6 +76,7 @@ ON('ready', function() {
 	PATH.fs.readFile(PATH.join(DIRECTORY, DB_FILE), function(err, data) {
 
 		FS.db = data ? data.toString('utf8').parseJSON(true) : {};
+		EMIT('flowstream_init', FS.db);
 
 		if (!FS.db.variables)
 			FS.db.variables = {};
