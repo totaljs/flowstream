@@ -1577,33 +1577,33 @@ function MAKEFLOWSTREAM(meta) {
 			case 'save':
 				flow.use(CLONE(msg.data), function(err) {
 					msg.error = err ? err.toString() : null;
+					msg.TYPE = 'flow/design';
 					flow.proxy.online && flow.proxy.send(msg);
 					callback && callback(msg);
 					save();
 				});
-				msg.TYPE = 'flow/design';
 				break;
 
 			case 'insert':
 				flow.insert(CLONE(msg.data), function(err) {
 					for (var key in msg.data)
 						msg.data[key] = flow.export_instance2(key);
+					msg.TYPE = 'flow/design_insert';
 					msg.error = err ? err.toString() : null;
 					flow.proxy.online && flow.proxy.send(msg);
 					callback && callback(msg);
 					save();
 				});
-				msg.TYPE = 'flow/design_insert';
 				break;
 
 			case 'remove':
 				flow.remove(msg.data, function(err) {
+					msg.TYPE = 'flow/design_remove';
 					msg.error = err ? err.toString() : null;
 					flow.proxy.online && flow.proxy.send(msg);
 					callback && callback(msg);
 					save();
 				});
-				msg.TYPE = 'flow/design_remove';
 				break;
 
 			case 'variables':
