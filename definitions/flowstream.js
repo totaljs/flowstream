@@ -61,7 +61,6 @@ FS.init = function(id, next) {
 		};
 
 		instance.onsave = function(data) {
-			delete flow.variables2;
 			EMIT('flowstream_save', data);
 			FS.db[id] = data;
 			FS.save();
@@ -82,9 +81,9 @@ ON('ready', function() {
 			FS.db.variables = {};
 
 		Object.keys(FS.db).wait(function(key, next) {
-			if (key === 'variables') {
+			if (key === 'variables')
 				next();
-			} else
+			else
 				FS.init(key, next);
 		});
 
