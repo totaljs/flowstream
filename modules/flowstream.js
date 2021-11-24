@@ -48,7 +48,7 @@ var CALLBACKID = 1;
 	Delegates:
 	instance.onsave(data);
 	instance.ondone();
-	instance.onerror(err, type);
+	instance.onerror(err, type, instanceid);
 	instance.output(fid, data, tfsid, tid);
 	instance.onhttproute(url, remove);
 	instance.ondestroy();
@@ -506,26 +506,6 @@ Instance.prototype.reconfigure = function(id, config) {
 	return self;
 };
 
-// Updates variables
-Instance.prototype.variables = function(variables) {
-
-	var self = this;
-	var flow = self.flow;
-
-	if (flow.isworkerthread) {
-		flow.postMessage({ TYPE: 'stream/variables', data: variables });
-	} else {
-		flow.variables = variables;
-		for (var key in flow.meta.flow) {
-			var instance = flow.meta.flow[key];
-			instance.variables && instance.variables(flow.variables);
-		}
-		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/variables', data: variables });
-		flow.save();
-	}
-	return self;
-};
-
 Instance.prototype.refresh = function(id, type, data) {
 	var self = this;
 	var flow = self.flow;
@@ -546,6 +526,27 @@ Instance.prototype.refresh = function(id, type, data) {
 	}
 };
 
+// Updates variables
+Instance.prototype.variables = function(variables) {
+
+	var self = this;
+	var flow = self.flow;
+
+	if (flow.isworkerthread) {
+		flow.$schema.variables = variables;
+		flow.postMessage({ TYPE: 'stream/variables', data: variables });
+	} else {
+		flow.variables = variables;
+		for (var key in flow.meta.flow) {
+			var instance = flow.meta.flow[key];
+			instance.variables && instance.variables(flow.variables);
+		}
+		flow.proxy.online && flow.proxy.send({ TYPE: 'flow/variables', data: variables });
+		flow.save();
+	}
+	return self;
+};
+
 // Updates global variables
 Instance.prototype.variables2 = function(variables) {
 
@@ -553,6 +554,7 @@ Instance.prototype.variables2 = function(variables) {
 	var flow = self.flow;
 
 	if (flow.isworkerthread) {
+		flow.$schema.variables2 = variables;
 		flow.postMessage({ TYPE: 'stream/variables2', data: variables });
 	} else {
 		flow.variables2 = variables;
@@ -1061,6 +1063,7 @@ function init_worker(meta, type, callback) {
 	worker.$instance.isworkerthread = true;
 	worker.isworkerthread = true;
 	worker.$schema = meta;
+
 	worker.$instance.output = function(id, data, flowstreamid, instanceid) {
 		exports.input(meta.id, id, flowstreamid, instanceid, data);
 	};
@@ -1128,6 +1131,11 @@ function init_worker(meta, type, callback) {
 				break;
 
 			case 'stream/save':
+				worker.$schema.components = msg.data.components;
+				worker.$schema.design = msg.data.design;
+				worker.$schema.variables = msg.data.variables;
+				worker.$schema.origin = msg.data.origin;
+				worker.$schema.sources = msg.data.sources;
 				worker.$instance.onsave && worker.$instance.onsave(msg.data);
 				break;
 
