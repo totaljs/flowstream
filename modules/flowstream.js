@@ -2004,7 +2004,7 @@ function MAKEFLOWSTREAM(meta) {
 			instance.$dashboard = status;
 
 		if (status != null && flow.proxy.online)
-			flow.proxy.online && flow.proxy.send({ TYPE: 'dashboard', id: instance.id, component: instance.component, data: status });
+			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/dashboard', id: instance.id, data: status });
 
 	};
 
