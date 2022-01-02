@@ -133,4 +133,19 @@ NEWSCHEMA('Streams', function(schema) {
 
 	});
 
+	schema.addWorkflow('restart', function($) {
+		var id = $.id;
+		var item = MAIN.flowstream.instances[id];
+		if (item) {
+			if (item.flow) {
+				if (item.flow.terminate)
+					item.flow.terminate();
+				else
+					item.flow.kill(9);
+			}
+			$.success();
+		} else
+			$.invalid(404);
+	});
+
 });

@@ -7,6 +7,7 @@ exports.install = function() {
 	ROUTE('+API    /api/    -streams_remove/{id}              *Streams      --> remove');
 	ROUTE('+API    /api/    -streams_stats                    *Streams      --> stats');
 	ROUTE('+API    /api/    -streams_pause/{id}               *Streams      --> pause');
+	ROUTE('+API    /api/    -streams_restart/{id}             *Streams      --> restart');
 
 	// Variables
 	ROUTE('+API    /api/    -variables                        *Variables    --> read');

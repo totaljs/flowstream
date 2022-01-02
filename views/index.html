@@ -11,8 +11,8 @@
 	@{if CONF.openplatform}
 	<script src="@{if CONF.cdn}@{'%cdn'}@{else}https://cdn.componentator.com@{fi}/openplatform.min@4.js"></script>
 	@{fi}
-	<script src="//cdn.componentator.com/spa.min@18.js"></script>
-	<link href="//cdn.componentator.com/spa.min@18.css" rel="stylesheet" />
+	<script src="@{if CONF.cdn}@{'%cdn'}@{else}https://cdn.componentator.com@{fi}/spa.min@19.js"></script>
+	<link href="@{if CONF.cdn}@{'%cdn'}@{else}https://cdn.componentator.com@{fi}/spa.min@19.css" rel="stylesheet" />
 	@{import('meta', 'head', 'ui.css + default.css', 'default.js + func.js + ui.js + helpers.js', 'favicon.png')}
 </head>
 <body data---="exec"@{if query.darkmode === '1'} class="ui-dark"@{fi}>
@@ -48,6 +48,7 @@
 		common.designer = '@{CONF.flowstream_designer}' || 'flowstreamdesigner.totaljs.com';
 		common.components = '@{CONF.flowstream_components}';
 		common.totalversion = +'@{F.version}';
+		common.workers = '@{CONF.flowstream_worker)' !== 'false';
 
 		DEF.api = '/api/';
 		DEF.dateformat = '@(yyyy-MM-dd)';
@@ -78,8 +79,6 @@
 			com.register('remove', shortcutsprocess('remove'));
 			com.register('save', shortcutsprocess('save'), true);
 		});
-
-
 
 	</script>
 

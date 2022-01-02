@@ -94,7 +94,7 @@
 
 			exports.scope();
 
-			DAPI('streams', function(response) {
+			DAPI('streams', ERROR(function(response) {
 
 				var groups = {};
 				for (var item of response) {
@@ -118,7 +118,7 @@
 				arr.quicksort('name');
 				SET('?.groups', arr);
 				SET('?.items', response);
-			});
+			}));
 		};
 
 		exports.open = function(el) {
@@ -173,6 +173,10 @@
 			opt.items.push({ id: 'clone', name: '@(Clone)', icon: 'far fa-clone' });
 			opt.items.push({ id: 'copy', name: '@(Copy to clipboard)', icon: 'far fa-copy' });
 			opt.items.push({ id: 'copy2', name: '@(Copy as JSON)', icon: 'far fa-copy' });
+
+			if (common.workers)
+				opt.items.push({ id: 'restart', name: '@(Restart)', icon: 'fa fa-sync' });
+
 			opt.items.push('-');
 			opt.items.push({ id: 'remove', name: '@(Remove)', icon: 'far fa-trash-alt red' });
 
@@ -192,6 +196,11 @@
 								item.stats.paused = !paused;
 						});
 						break;
+					case 'restart':
+						SETTER('approve/show', '@(Are you sure you want to restart selected FlowStream "{0}"?)'.format(item.name), '"fa fa-sync" @(Restart)', function() {
+							DAPI('streams_restart/' + id, ASETTER('message/response',ASETTER('notifybar/success', '@(FlowStream "{0}" is restarting ...)'.format(item.name))));
+						});
+						break;
 					case 'variables':
 						DAPI('variables?id=' + id, ASETTER('message/response', function(response) {
 							var model = {};
@@ -209,7 +218,7 @@
 						DAPI('clipboard_export/' + id, ASETTER('message/response', function(response) {
 							if (opt.id === 'copy' || opt.id === 'copy2') {
 								SETTER('clipboard/copy', opt.id === 'copy' ? ENCRYPT(response.value, common.secret, 'flow') : response.value);
-								SETTER('notifybar/success', '@(The Flow has been copied into the clipboard)');
+								SETTER('notifybar/success', '@(The FlowStream has been copied into the clipboard)');
 							} else {
 								DAPI('clipboard_import @showloading', { data: response.value }, ASETTER('message/response @hideloading', function(response) {
 									exports.refresh();
@@ -230,7 +239,7 @@
 						}));
 						break;
 					case 'remove':
-						SETTER('approve/show', '@(Are you sure you want to remove selected Flow "{0}"?)'.format(item.name), '"far fa-trash-alt" @(Remove)', function() {
+						SETTER('approve/show', '@(Are you sure you want to remove selected FlowStream "{0}"?)'.format(item.name), '"far fa-trash-alt" @(Remove)', function() {
 							DAPI('streams_remove/' + id, ASETTER('message/response', exports.refresh));
 						});
 						break;
@@ -245,7 +254,7 @@
 			opt.element = el;
 			opt.items = [];
 			opt.items.push({ id: 'create', name: '@(Create new)', icon: 'far fa-object-ungroup' });
-			opt.items.push({ id: 'import', name: '@(Import Flow)', icon: 'fas fa-file-import' });
+			opt.items.push({ id: 'import', name: '@(Import FlowStream)', icon: 'fas fa-file-import' });
 			// opt.items.push({ id: 'opensource', name: '@(Download templates)', icon: 'fas fa-cloud-download' });
 
 			if (common.marketplace) {
