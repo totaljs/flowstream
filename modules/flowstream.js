@@ -7,8 +7,9 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 12;
+const VERSION = 13;
 
+var isFLOWSTREAMWORKER = false;
 var Parent = W.parentPort;
 var CALLBACKS = {};
 var FLOWS = {};
@@ -724,6 +725,10 @@ function httprequest(self, opt, callback) {
 
 function init_current(meta, callback) {
 
+	// Due to C/C++ modules
+	if (isFLOWSTREAMWORKER)
+		CONF.node_modules = '~' + PATH.join(meta.directory, meta.id, 'node_modules');
+
 	var flow = MAKEFLOWSTREAM(meta);
 	FLOWS[meta.id] = flow;
 
@@ -1356,7 +1361,6 @@ function MAKEFLOWSTREAM(meta) {
 	var saveid;
 
 	flow.metadata = meta;
-
 	flow.export_instance2 = function(id) {
 
 		var com = flow.meta.flow[id];
@@ -2459,10 +2463,10 @@ TMS.refresh = function(fs, callback) {
 					readme.push('- Channel: __publish__');
 					readme.push('- JSON schema `' + m.id + '.json`');
 					readme.push('- Version: ' + VERSION);
-
-					readme.push('```json');
+					readme.push('');
+					readme.push('\`\`\`json');
 					readme.push(JSON.stringify(m.schema, null, '  '));
-					readme.push('```');
+					readme.push('\`\`\`');
 
 					var id = 'pub' + item.id + 'X' + m.id;
 					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, makeschema(m.schema), item.id);
@@ -2484,10 +2488,10 @@ TMS.refresh = function(fs, callback) {
 					readme.push('- Channel: __subscribe__');
 					readme.push('- JSON schema `' + m.id + '.json`');
 					readme.push('- Version: ' + VERSION);
-
-					readme.push('```json');
+					readme.push('');
+					readme.push('\`\`\`json');
 					readme.push(JSON.stringify(m, null, '  '));
-					readme.push('```');
+					readme.push('\`\`\`');
 
 					var id = 'sub' + item.id + 'X' + m.id;
 					var template = TEMPLATE_SUBSCRIBE.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-satellite-dish', m.url, id, makeschema(m.schema), item.id);
@@ -2509,10 +2513,10 @@ TMS.refresh = function(fs, callback) {
 					readme.push('- Channel: __call__');
 					readme.push('- JSON schema `' + m.id + '.json`');
 					readme.push('- Version: ' + VERSION);
-
-					readme.push('```json');
+					readme.push('');
+					readme.push('\`\`\`json');
 					readme.push(JSON.stringify(m.schema, null, '  '));
-					readme.push('```');
+					readme.push('\`\`\`');
 
 					var id = 'cal' + item.id + 'X' + m.id;
 					var template = TEMPLATE_CALL.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'far fa-plug', m.url, id, makeschema(m.schema), item.id);
@@ -2607,6 +2611,8 @@ TMS.synchronize = function(fs) {
 TMS.refresh2 = function(fs) {
 	setTimeout2('tms_refresh_' + fs.name, fs => TMS.refresh(fs), 500, null, fs);
 };
+
+isFLOWSTREAMWORKER = W.workerData || process.argv.indexOf('--fork') !== -1;
 
 // Runs the worker
 if (W.workerData) {
