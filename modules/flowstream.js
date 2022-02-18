@@ -1,6 +1,6 @@
 // FlowStream module
 // The MIT License
-// Copyright 2021 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2022 (c) Peter Širka <petersirka@gmail.com>
 
 if (!global.F)
 	require('total4');
@@ -726,7 +726,7 @@ function httprequest(self, opt, callback) {
 function init_current(meta, callback) {
 
 	// Due to C/C++ modules
-	if (isFLOWSTREAMWORKER)
+	if (isFLOWSTREAMWORKER && meta.sandbox)
 		CONF.node_modules = '~' + PATH.join(meta.directory, meta.id, 'node_modules');
 
 	var flow = MAKEFLOWSTREAM(meta);
@@ -949,6 +949,9 @@ function init_current(meta, callback) {
 				} else if (source === 'instance_close') {
 					instanceid = instance.id;
 					componentid = instance.component;
+				} else if (source === 'instance_make') {
+					instanceid = instance.id;
+					componentid = instance.component;
 				} else if (source === 'register') {
 					instanceid = '';
 					componentid = instance;
@@ -1033,6 +1036,9 @@ function init_current(meta, callback) {
 					instanceid = instance.instance.id;
 					componentid = instance.instance.component;
 				} else if (source === 'instance_close') {
+					instanceid = instance.id;
+					componentid = instance.component;
+				} else if (source === 'instance_make') {
 					instanceid = instance.id;
 					componentid = instance.component;
 				} else if (source === 'register') {
