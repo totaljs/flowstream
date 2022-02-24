@@ -13,7 +13,7 @@
 	@{fi}
 	<script src="@{if CONF.cdn}@{'%cdn'}@{else}https://cdn.componentator.com@{fi}/spa.min@19.js"></script>
 	<link href="@{if CONF.cdn}@{'%cdn'}@{else}https://cdn.componentator.com@{fi}/spa.min@19.css" rel="stylesheet" />
-	@{import('meta', 'head', 'ui.css + default.css', 'default.js + func.js + ui.js + helpers.js', 'favicon.png')}
+	@{import('meta', 'head', 'ui.css + default.css', 'default.js + func.js + ui.js + helpers.js', 'favicon.ico')}
 </head>
 <body data---="exec"@{if query.darkmode === '1'} class="ui-dark"@{fi}>
 
