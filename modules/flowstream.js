@@ -7,7 +7,7 @@ if (!global.F)
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 15;
+const VERSION = 16;
 
 var isFLOWSTREAMWORKER = false;
 var Parent = W.parentPort;
@@ -326,7 +326,7 @@ Instance.prototype.eval = function(msg, callback) {
 };
 
 // Destroys the Flow
-Instance.prototype.destroy = function() {
+Instance.prototype.kill = Instance.prototype.destroy = function() {
 
 	var self = this;
 
@@ -745,6 +745,7 @@ function init_current(meta, callback) {
 	if (Parent) {
 
 		Parent.on('message', function(msg) {
+
 			switch (msg.TYPE) {
 
 				case 'stream/export':
@@ -915,6 +916,10 @@ function init_current(meta, callback) {
 			}
 		});
 
+		flow.proxy.kill = function() {
+			Parent.postMessage({ TYPE: 'stream/kill' });
+		};
+
 		flow.proxy.send = function(msg, type, clientid) {
 			Parent.postMessage({ TYPE: 'ui/send', data: msg, type: type, clientid: clientid });
 		};
@@ -945,8 +950,12 @@ function init_current(meta, callback) {
 
 			if (instance) {
 				if (source === 'instance_message') {
-					instanceid = instance.instance.id;
-					componentid = instance.instance.component;
+					if (instance.instance) {
+						instanceid = instance.instance.id;
+						componentid = instance.instance.component;
+					} else {
+						console.log('ERROR', instance);
+					}
 				} else if (source === 'instance_close') {
 					instanceid = instance.id;
 					componentid = instance.component;
@@ -997,6 +1006,10 @@ function init_current(meta, callback) {
 
 		flow.proxy.io = function(flowstreamid, id, callback) {
 			exports.io(flowstreamid, id, callback);
+		};
+
+		flow.proxy.kill = function() {
+			flow.$instance.kill();
 		};
 
 		flow.proxy.send = NOOP;
@@ -1107,6 +1120,10 @@ function init_worker(meta, type, callback) {
 
 			case 'stream/stats':
 				worker.stats = msg.data;
+				break;
+
+			case 'stream/kill':
+				worker.$instance.destroy(msg.code || 9);
 				break;
 
 			case 'stream/exec':
@@ -1474,11 +1491,23 @@ function MAKEFLOWSTREAM(meta) {
 		save();
 	};
 
-	var refresh_components = function() {
+	flow.kill = function(code) {
+		flow.proxy.kill(code);
+	};
+
+	var timeoutrefresh = null;
+
+	var refresh_components_force = function() {
+		timeoutrefresh = null;
 		if (flow.proxy.online) {
 			flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
 			flow.proxy.send({ TYPE: 'flow/design', data: flow.export() });
 		}
+	};
+
+	var refresh_components = function() {
+		timeoutrefresh && clearTimeout(timeoutrefresh);
+		timeoutrefresh = setTimeout(refresh_components_force, 700);
 	};
 
 	flow.sources = meta.sources;
