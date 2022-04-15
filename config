@@ -3,7 +3,7 @@ allow_custom_titles     : true
 cdn                     : https://cdn.componentator.com
 flowstream_designer     : flowstreamdesigner.totaljs.com
 backup                  : false
-flowstream_worker       : true
+flowstream_worker       : fork
 
 // Disables: Worker/Fork
 // flowstream_worker       : false
