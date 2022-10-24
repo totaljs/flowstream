@@ -41,7 +41,6 @@ var CALLBACKID = 1;
 	instance.variables2(variables);
 	instance.pause(is);
 	instance.socket(socket);
-	instance.sendfs(flowstreamid, id, data);
 	instance.exec(opt, callback);
 	instance.httprequest(opt, callback);
 	instance.eval(msg, callback);
@@ -263,37 +262,47 @@ Instance.prototype.exec = function(opt, callback) {
 	return self;
 };
 
-// Performs trigger
-Instance.prototype.trigger = function(id, data) {
-	var self = this;
+function execfn(self, name, id, data) {
 	var flow = self.flow;
 	if (flow.isworkerthread)
-		flow.postMessage2({ TYPE: 'stream/trigger', id: id, data: data });
+		flow.postMessage2({ TYPE: 'stream/' + name, id: id, data: data });
 	else {
 		if (!flow.paused) {
 			if (id[0] === '@') {
 				id = id.substring(1);
 				for (var key in flow.meta.flow) {
 					var com = flow.meta.flow[key];
-					if (com.component === id && com.trigger)
-						com.trigger(data);
+					if (com.component === id && com[name])
+						com[name](data);
 				}
 			} else if (id[0] === '#') {
 				id = id.substring(1);
 				for (var key in flow.meta.flow) {
 					var com = flow.meta.flow[key];
-					if (com.module.name === id && com.trigger)
-						com.trigger(data);
+					if (com.module.name === id && com[name])
+						com[name](data);
 				}
 			} else {
 				var com = flow.meta.flow[id];
-				if (com && com.trigger)
-					com.trigger(data);
+				if (com && com[name])
+					com[name](data);
 			}
 		}
 	}
-	return self;
+}
+
+// Performs trigger
+Instance.prototype.trigger = function(id, data) {
+	execfn(this, 'trigger', id, data);
+	return this;
 };
+
+// Notifies instance
+Instance.prototype.notify = function(id, data) {
+	execfn(this, 'notify', id, data);
+	return this;
+};
+
 
 // Performs pause
 Instance.prototype.pause = function(is) {
@@ -758,6 +767,8 @@ function init_current(meta, callback) {
 
 		Parent.on('message', function(msg) {
 
+			var id;
+
 			switch (msg.TYPE) {
 
 				case 'stream/export':
@@ -787,11 +798,30 @@ function init_current(meta, callback) {
 						flow.proxy.message(msg);
 					break;
 
+				case 'stream/notify':
 				case 'stream/trigger':
+					id = msg.id;
+					var type = msg.TYPE.substring(7);
 					if (!flow.paused) {
-						var tmp = flow.meta.flow[meta.id];
-						if (tmp && tmp.trigger)
-							tmp.trigger(msg.data);
+						if (id[0] === '@') {
+							id = id.substring(1);
+							for (var key in flow.meta.flow) {
+								var com = flow.meta.flow[key];
+								if (com.component === id && com[type])
+									com[type](msg.data);
+							}
+						} else if (id[0] === '#') {
+							id = id.substring(1);
+							for (var key in flow.meta.flow) {
+								var com = flow.meta.flow[key];
+								if (com.module.name === id && com[type])
+									com[type](msg.data);
+							}
+						} else {
+							var com = flow.meta.flow[id];
+							if (com && com[type])
+								com[type](msg.data);
+						}
 					}
 					break;
 
@@ -848,7 +878,7 @@ function init_current(meta, callback) {
 
 					if (msg.id) {
 						if (msg.id[0] === '@') {
-							var id = msg.id.substring(1);
+							id = msg.id.substring(1);
 							for (var key in flow.meta.flow) {
 								let tmp = flow.meta.flow[key];
 								if (tmp.input && tmp.component === id)
@@ -2183,7 +2213,7 @@ function MAKEFLOWSTREAM(meta) {
 	});
 
 	var makemeta = function() {
-		return { TYPE: 'flow/flowstream', version: VERSION, paused: flow.paused, node: F.version_node, total: F.version, name: flow.$schema.name, version2: flow.$schema.version, icon: flow.$schema.icon, reference: flow.$schema.reference, author: flow.$schema.author, color: flow.$schema.color, origin: flow.$schema.origin, readme: flow.$schema.readme, url: flow.$schema.url, proxypath: flow.$schema.proxypath, env: flow.$schema.env, worker: isFLOWSTREAMWORKER ? (W.workerData ? 'Worker Thread' : 'Child Process') : false };
+		return { TYPE: 'flow/flowstream', id: flow.$schema.id, version: VERSION, paused: flow.paused, node: F.version_node, total: F.version, name: flow.$schema.name, version2: flow.$schema.version, icon: flow.$schema.icon, reference: flow.$schema.reference, author: flow.$schema.author, color: flow.$schema.color, origin: flow.$schema.origin, notify: flow.$schema.origin + '/notify/' + flow.$schema.id + '-/', readme: flow.$schema.readme, url: flow.$schema.url, proxypath: flow.$schema.proxypath, env: flow.$schema.env, worker: isFLOWSTREAMWORKER ? (W.workerData ? 'Worker Thread' : 'Child Process') : false };
 	};
 
 	flow.proxy.refreshmeta = function() {
@@ -2637,9 +2667,9 @@ TMS.refresh = function(fs, callback) {
 					readme.push('- JSON schema `' + m.id + '.json`');
 					readme.push('- Version: ' + VERSION);
 					readme.push('');
-					readme.push('\`\`\`json');
+					readme.push('```json');
 					readme.push(JSON.stringify(m.schema, null, '  '));
-					readme.push('\`\`\`');
+					readme.push('```');
 
 					var id = 'pub' + item.id + 'X' + m.id;
 					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, item.meta.name.max(15), item.id); // makeschema(m.schema)
