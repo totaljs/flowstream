@@ -468,7 +468,7 @@ function readinstance(flow, id) {
 		var com = flow.meta.components[tmp.component];
 		if (com) {
 			if ((com.type === 'output' || com.type === 'input' || com.type === 'config'))
-				return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, type: com.type, readme: tmp.config.readme, outputs: tmp.outputs, inputs: tmp.inputs };
+				return { id: id, componentid: tmp.component, component: com.name, name: tmp.config.name || com.name, schema: com.schemaid ? com.schemaid[1] : undefined, icon: com.icon, color: com.color, type: com.type, readme: tmp.config.readme, outputs: tmp.outputs, inputs: tmp.inputs };
 		} else
 			flow.clean();
 	}
@@ -516,11 +516,23 @@ Instance.prototype.reconfigure = function(id, config) {
 	return self;
 };
 
-Instance.prototype.refresh = function(id, type, data) {
+Instance.prototype.refresh = function(id, type, data, restart) {
 	var self = this;
 	var flow = self.flow;
 	if (flow.isworkerthread) {
+
+		for (var key in data)
+			flow.$schema[key] = data[key];
+
+		if (restart) {
+			if (flow.terminate)
+				flow.terminate();
+			else
+				flow.kill(9);
+		}
+
 		flow.postMessage2({ TYPE: 'stream/refresh', id: id, type: type, data: data });
+
 	} else {
 
 		if (type === 'meta' && data) {
@@ -734,6 +746,11 @@ function httprequest(self, opt, callback) {
 	}
 }
 
+function killprocess() {
+	console.error('Main process doesn\'t respond');
+	process.exit(1);
+}
+
 function init_current(meta, callback) {
 
 	if (!meta.directory)
@@ -756,6 +773,7 @@ function init_current(meta, callback) {
 	flow.origin = meta.origin;
 	flow.proxypath = meta.proxypath || '';
 	flow.proxy.online = false;
+	flow.proxy.ping = 0;
 
 	flow.$instance = new Instance(flow, meta.id);
 
@@ -765,11 +783,20 @@ function init_current(meta, callback) {
 
 	if (Parent) {
 
+		Parent.on('disconnect', function() {
+			F.Fs.appendFile('disconnect.txt', process.pid + ' ' + meta.id + '\n', NOOP);
+		});
+
 		Parent.on('message', function(msg) {
 
 			var id;
 
 			switch (msg.TYPE) {
+
+				case 'ping':
+					flow.proxy.ping && clearTimeout(flow.proxy.ping);
+					flow.proxy.ping = setTimeout(killprocess, 10000);
+					break;
 
 				case 'stream/export':
 					msg.data = flow.export2();
@@ -1126,11 +1153,10 @@ function init_current(meta, callback) {
 function init_worker(meta, type, callback) {
 
 	var forkargs = [F.directory, '--fork'];
-
 	if (meta.memory)
 		forkargs.push('--max-old-space-size=' + meta.memory);
 
-	var worker = type === true || type === 'worker' ? (new W.Worker(__filename, { workerData: meta })) : Fork(__filename, forkargs, { serialization: 'json' });
+	var worker = type === true || type === 'worker' ? (new W.Worker(__filename, { workerData: meta })) : Fork(__filename, forkargs, { serialization: 'json', detached: false });
 	var ischild = false;
 
 	meta.unixsocket = F.isWindows ? ('\\\\?\\pipe\\flowstream' + F.directory.makeid() + meta.id + Date.now().toString(36)) : (F.Path.join(F.OS.tmpdir(), 'flowstream_' + F.directory.makeid() + '_' + meta.id + '_' + Date.now().toString(36) + '.socket'));
@@ -1486,7 +1512,7 @@ function MAKEFLOWSTREAM(meta) {
 
 			var c = flow.meta.components[com.component];
 			if (c) {
-				tmp.template = { type: c.type, icon: c.icon, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
+				tmp.template = { type: c.type, icon: c.icon, color: c.color, group: c.group, name: c.name, inputs: c.inputs, outputs: c.outputs };
 				return tmp;
 			}
 		}
@@ -1580,6 +1606,8 @@ function MAKEFLOWSTREAM(meta) {
 		timeoutrefresh && clearTimeout(timeoutrefresh);
 		timeoutrefresh = setTimeout(refresh_components_force, 700);
 	};
+
+	flow.redraw = refresh_components;
 
 	flow.sources = meta.sources;
 	flow.proxy = {};
@@ -1718,6 +1746,7 @@ function MAKEFLOWSTREAM(meta) {
 				var origin = msg.body || '';
 				if (flow.$schema.origin !== origin) {
 					flow.origin = flow.$schema.origin = origin;
+					flow.proxy.refreshmeta();
 					save();
 				}
 				break;
@@ -1945,6 +1974,7 @@ function MAKEFLOWSTREAM(meta) {
 				obj.css = com.ui.css;
 				obj.js = com.ui.js;
 				obj.icon = com.icon;
+				obj.color = com.color;
 				obj.config = com.config;
 				obj.html = com.ui.html;
 				obj.schema = com.schema ? com.schema.id : null;
@@ -2823,7 +2853,7 @@ if (W.workerData) {
 	exports.init(W.workerData);
 }
 
-if (process.argv.indexOf('--fork') !== -1) {
+if (process.argv.includes('--fork')) {
 	process.once('message', function(msg) {
 		if (msg.TYPE === 'init') {
 			Parent = process;
