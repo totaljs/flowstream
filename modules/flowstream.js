@@ -1,19 +1,21 @@
 // FlowStream module
 // The MIT License
-// Copyright 2021-2022 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
 
 if (!global.F)
 	require('total4');
 
 const W = require('worker_threads');
 const Fork = require('child_process').fork;
-const VERSION = 24;
+const VERSION = 25;
+const NOTIFYPATH = '/notify/';
 
 var isFLOWSTREAMWORKER = false;
 var Parent = W.parentPort;
 var CALLBACKS = {};
 var FLOWS = {};
 var TMS = {};
+var RPC = {};
 var CALLBACKID = 1;
 
 /*
@@ -25,6 +27,8 @@ var CALLBACKID = 1;
 	module.input([flowstreamid], [id], data);
 	module.trigger(flowstreamid, id, data);
 	module.refresh([flowstreamid], [type]);
+	module.rpc(name, callback);
+	module.exec(id, opt);
 
 	Methods:
 	instance.trigger(id, data);
@@ -42,6 +46,7 @@ var CALLBACKID = 1;
 	instance.pause(is);
 	instance.socket(socket);
 	instance.exec(opt, callback);
+	instance.cmd(path, data);
 	instance.httprequest(opt, callback);
 	instance.eval(msg, callback);
 
@@ -67,6 +72,7 @@ function Instance(instance, id) {
 	this.version = VERSION;
 	this.id = id;
 	this.flow = instance;
+	// this.onoutput = null;
 }
 
 Instance.prototype.httprequest = function(opt, callback) {
@@ -236,6 +242,20 @@ Instance.prototype.httprouting = function() {
 	return instance;
 };
 
+Instance.prototype.cmd = function(path, data) {
+
+	var self = this;
+	if (self.flow.isworkerthread) {
+		self.flow.postMessage2({ TYPE: 'stream/cmd', path: path, data: data });
+	} else {
+		var fn = path.indexOf('.') === - 1 ? global[path] : U.get(global, path);
+		if (typeof(fn) === 'function')
+			fn(data);
+	}
+
+	return self;
+};
+
 Instance.prototype.exec = function(opt, callback) {
 
 	// opt.id = instance_ID
@@ -387,19 +407,26 @@ Instance.prototype.input = function(flowstreamid, fromid, toid, data) {
 	if (toid) {
 		if (toid[0] === '@') {
 			var tmpid = toid.substring(1);
-			for (var key in flow.meta.flow) {
+			for (let key in flow.meta.flow) {
 				let tmp = flow.meta.flow[key];
 				if (tmp.input && tmp.component === tmpid)
 					tmp.input(flowstreamid, fromid, data);
 			}
 		} else {
 			let tmp = flow.meta.flow[toid];
-			if (tmp.input)
-				tmp.input(flowstreamid, fromid, data);
+			if (tmp) {
+				tmp.input && tmp.input(flowstreamid, fromid, data);
+			} else {
+				for (let key in flow.meta.flow) {
+					let tmp = flow.meta.flow[key];
+					if (tmp.input && tmp.config.name === toid)
+						tmp.input(flowstreamid, fromid, data);
+				}
+			}
 		}
 	} else {
 		// Send to all inputs
-		for (var key in flow.meta.flow) {
+		for (let key in flow.meta.flow) {
 			var f = flow.meta.flow[key];
 			var c = flow.meta.components[f.component];
 			if (f.input && c.type === 'input2')
@@ -646,6 +673,10 @@ exports.refresh = function(id, type) {
 	}
 };
 
+exports.rpc = function(name, callback) {
+	RPC[name] = callback;
+};
+
 exports.version = VERSION;
 
 function exec(self, opt) {
@@ -724,7 +755,27 @@ function exec(self, opt) {
 		}
 
 		setImmediate(next);
+
+	}, function() {
+		if (!target.length) {
+			if (opt.callback) {
+				opt.callback(404);
+			} else if (Parent && opt.callbackid !== -1) {
+				opt.repo = undefined;
+				opt.vars = undefined;
+				opt.data = { error: 404 };
+				Parent.postMessage(opt);
+			}
+		}
 	});
+}
+
+function rpc(name, data, callback) {
+	var fn = RPC[name];
+	if (fn)
+		fn(data, callback);
+	else
+		callback('Invalid remote procedure name');
 }
 
 function httprequest(self, opt, callback) {
@@ -769,6 +820,15 @@ function init_current(meta, callback) {
 		F.frameworkless(false, { unixsocket: meta.unixsocket, config: { allow_stats_snapshot: false }});
 	}
 
+	if (meta.import) {
+		var tmp = meta.import.split(/,|;/).trim();
+		for (var m of tmp) {
+			var mod = require(PATH.root(m));
+			mod.install && mod.install(flow);
+			mod.init && mod.init(flow);
+		}
+	}
+
 	flow.env = meta.env;
 	flow.origin = meta.origin;
 	flow.proxypath = meta.proxypath || '';
@@ -782,10 +842,6 @@ function init_current(meta, callback) {
 	};
 
 	if (Parent) {
-
-		Parent.on('disconnect', function() {
-			F.Fs.appendFile('disconnect.txt', process.pid + ' ' + meta.id + '\n', NOOP);
-		});
 
 		Parent.on('message', function(msg) {
 
@@ -809,6 +865,12 @@ function init_current(meta, callback) {
 
 				case 'stream/httprequest':
 					httprequest(flow, msg.data, msg.callbackid);
+					break;
+
+				case 'stream/cmd':
+					var fn = msg.path.indexOf('.') === - 1 ? global[msg.path] : U.get(global, msg.path);
+					if (fn && typeof(fn) === 'function')
+						fn(msg.data);
 					break;
 
 				case 'stream/exec':
@@ -872,6 +934,7 @@ function init_current(meta, callback) {
 					break;
 
 				case 'stream/io2':
+				case 'stream/rpcresponse':
 					var cb = CALLBACKS[msg.callbackid];
 					if (cb) {
 						delete CALLBACKS[msg.callbackid];
@@ -906,18 +969,25 @@ function init_current(meta, callback) {
 					if (msg.id) {
 						if (msg.id[0] === '@') {
 							id = msg.id.substring(1);
-							for (var key in flow.meta.flow) {
+							for (let key in flow.meta.flow) {
 								let tmp = flow.meta.flow[key];
 								if (tmp.input && tmp.component === id)
 									tmp.input(msg.flowstreamid, msg.fromid, msg.data);
 							}
 						} else {
 							let tmp = flow.meta.flow[msg.id];
-							if (tmp && tmp.input)
-								tmp.input(msg.flowstreamid, msg.fromid, msg.data);
+							if (tmp) {
+								tmp.input && tmp.input(msg.flowstreamid, msg.fromid, msg.data);
+							} else {
+								for (let key in flow.meta.flow) {
+									let tmp = flow.meta.flow[key];
+									if (tmp.input && tmp.config.name === msg.id)
+										tmp.input(msg.flowstreamid, msg.fromid, msg.data);
+								}
+							}
 						}
 					} else {
-						for (var key in flow.meta.flow) {
+						for (let key in flow.meta.flow) {
 							var f = flow.meta.flow[key];
 							var c = flow.meta.components[f.component];
 							if (f.input && c.type === 'input2')
@@ -1233,6 +1303,10 @@ function init_worker(meta, type, callback) {
 				}
 				break;
 
+			case 'stream/rpc':
+				rpc(msg.name, msg.data, (err, response) => worker.postMessage2({ TYPE: 'stream/rpcresponse', error: err, data: response, callbackid: msg.callbackid }));
+				break;
+
 			case 'stream/export':
 			case 'stream/components':
 				var cb = CALLBACKS[msg.callbackid];
@@ -1281,6 +1355,10 @@ function init_worker(meta, type, callback) {
 				break;
 
 			case 'stream/output':
+				if (worker.$instance.onoutput) {
+					var tmp = meta.design[msg.id];
+					tmp && worker.$instance.onoutput({ id: msg.id, name: tmp.config.name, data: msg.data });
+				}
 				worker.$instance.output && worker.$instance.output(msg.id, msg.data, msg.flowstreamid, msg.instanceid);
 				break;
 
@@ -1557,6 +1635,7 @@ function MAKEFLOWSTREAM(meta) {
 		data.proxypath = flow.$schema.proxypath;
 		data.origin = flow.$schema.origin;
 		data.dtcreated = flow.$schema.dtcreated;
+		data.import = flow.$schema.import;
 		return data;
 	};
 
@@ -1607,8 +1686,17 @@ function MAKEFLOWSTREAM(meta) {
 		timeoutrefresh = setTimeout(refresh_components_force, 700);
 	};
 
-	flow.redraw = refresh_components;
+	flow.rpc = function(name, data, callback) {
+		if (Parent) {
+			var callbackid = callback ? (CALLBACKID++) : -1;
+			if (callbackid !== -1)
+				CALLBACKS[callbackid] = { id: flow.id, callback: callback };
+			Parent.postMessage({ TYPE: 'stream/rpc', name: name, data: data, callbackid: callbackid });
+		} else
+			rpc(name, data, callback);
+	};
 
+	flow.redraw = refresh_components;
 	flow.sources = meta.sources;
 	flow.proxy = {};
 
@@ -2243,7 +2331,7 @@ function MAKEFLOWSTREAM(meta) {
 	});
 
 	var makemeta = function() {
-		return { TYPE: 'flow/flowstream', id: flow.$schema.id, version: VERSION, paused: flow.paused, node: F.version_node, total: F.version, name: flow.$schema.name, version2: flow.$schema.version, icon: flow.$schema.icon, reference: flow.$schema.reference, author: flow.$schema.author, color: flow.$schema.color, origin: flow.$schema.origin, notify: flow.$schema.origin + '/notify/' + flow.$schema.id + '-/', readme: flow.$schema.readme, url: flow.$schema.url, proxypath: flow.$schema.proxypath, env: flow.$schema.env, worker: isFLOWSTREAMWORKER ? (W.workerData ? 'Worker Thread' : 'Child Process') : false };
+		return { TYPE: 'flow/flowstream', id: flow.$schema.id, version: VERSION, paused: flow.paused, node: F.version_node, total: F.version, name: flow.$schema.name, version2: flow.$schema.version, icon: flow.$schema.icon, reference: flow.$schema.reference, author: flow.$schema.author, color: flow.$schema.color, origin: flow.$schema.origin, notify: flow.$schema.origin + NOTIFYPATH + flow.$schema.id + '-/', readme: flow.$schema.readme, url: flow.$schema.url, proxypath: flow.$schema.proxypath, env: flow.$schema.env, worker: isFLOWSTREAMWORKER ? (W.workerData ? 'Worker Thread' : 'Child Process') : false };
 	};
 
 	flow.proxy.refreshmeta = function() {
@@ -2655,20 +2743,6 @@ const TEMPLATE_CALL = `<script total>
 	</header>
 </body>`;
 
-// Deprecated
-/*
-function makeschema(item) {
-
-	var str = '';
-
-	for (var key in item.properties) {
-		var prop = item.properties[key];
-		str += '<div><code>{0}</code><span>{1}</span></div>'.format(key, prop.type);
-	}
-
-	return str;
-}*/
-
 TMS.refresh = function(fs, callback) {
 
 	Object.keys(fs.sources).wait(function(key, next) {
@@ -2702,7 +2776,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push('```');
 
 					var id = 'pub' + item.id + 'X' + m.id;
-					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, item.meta.name.max(15), item.id); // makeschema(m.schema)
+					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'pub';
@@ -2727,7 +2801,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push('\`\`\`');
 
 					var id = 'sub' + item.id + 'X' + m.id;
-					var template = TEMPLATE_SUBSCRIBE.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-satellite-dish', m.url, id, item.meta.name.max(15), item.id); // makeschema(m.schema)
+					var template = TEMPLATE_SUBSCRIBE.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-satellite-dish', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'sub';
@@ -2752,7 +2826,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push('\`\`\`');
 
 					var id = 'cal' + item.id + 'X' + m.id;
-					var template = TEMPLATE_CALL.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fa fa-plug', m.url, id, item.meta.name.max(15), item.id); // makeschema(m.schema)
+					var template = TEMPLATE_CALL.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fa fa-plug', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'call';
